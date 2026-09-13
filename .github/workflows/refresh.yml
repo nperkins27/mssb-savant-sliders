@@ -1,0 +1,114 @@
+name: Refresh Savant Sliders
+
+on:
+  schedule:
+    # GitHub cron runs in UTC and ignores daylight saving time. 08:17 UTC is
+    # 4:17 AM EDT (summer) and 09:17 UTC is 4:17 AM EST (winter).
+    # build_seasons.py --scheduled skips whichever run is early or redundant.
+    # :17 rather than :00 because on-the-hour schedules are the most delayed.
+    - cron: "17 8 * * *"
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+    inputs:
+      season:
+        description: "Rebuild only this season, even if final (e.g. s15superstarsoff). Blank = build whatever is due."
+        required: false
+        default: ""
+  push:
+    branches: [main]
+    paths:
+      - "site/index.html"
+      - "mssb_savant_sliders.sql"
+      - "build_seasons.py"
+      - ".github/workflows/refresh.yml"
+
+# Never run two builds at once: both would commit site/data.
+concurrency:
+  group: savant-sliders
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    outputs:
+      ran: ${{ steps.build.outputs.ran }}
+      alert: ${{ steps.build.outputs.alert }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # full history, so the rebase before push always works
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Build season data
+        id: build
+        env:
+          RIO_DB_HOST: ${{ secrets.RIO_DB_HOST }}
+          RIO_DB_PORT: ${{ secrets.RIO_DB_PORT }}
+          RIO_DB_NAME: ${{ secrets.RIO_DB_NAME }}
+          RIO_DB_USER: ${{ secrets.RIO_DB_USER }}
+          RIO_DB_PASSWORD: ${{ secrets.RIO_DB_PASSWORD }}
+          EVENT: ${{ github.event_name }}
+          SEASON: ${{ inputs.season }}
+        run: |
+          args=()
+          if [ "$EVENT" = "schedule" ]; then args+=(--scheduled); fi
+          if [ -n "$SEASON" ]; then args+=(--season "$SEASON"); fi
+          python -u build_seasons.py "${args[@]}"
+
+      # Committing the refreshed data also counts as repository activity, which
+      # stops GitHub from disabling this schedule after 60 quiet days.
+      - name: Commit refreshed data
+        if: steps.build.outputs.ran == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+          else
+            git commit -m "Refresh season data $(date -u +%Y-%m-%d)"
+            git pull --rebase origin "$GITHUB_REF_NAME"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
+
+      - name: Package site
+        if: steps.build.outputs.ran == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.ran == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+  # A failed run is what makes GitHub send you an email, so the "no season
+  # recognised for weeks" warning fails its own job after the site deploys.
+  season-alert:
+    needs: [build, deploy]
+    if: always() && needs.build.outputs.alert != ''
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          ALERT: ${{ needs.build.outputs.alert }}
+        run: |
+          echo "::error::$ALERT"
+          exit 1
