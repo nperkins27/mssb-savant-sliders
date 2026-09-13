@@ -87,7 +87,8 @@
   Players qualify with <b>10 games</b> in the season. Charge Timing also needs 25 charge swings
   and counts only Bowser, Petey, DK and the Bro and Pianta variants; Charge Down-Input
   (25 contacted charge swings) and HR&nbsp;% Allowed (50 at-bats faced) add King Boo and Wario.
-  Adjusted ELO applies the community formula to a player&rsquo;s latest rating in the season.
+  ELO uses the community formula, based on a player&rsquo;s latest rating in the season and their
+  games and wins.
   Completed seasons are final; the current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
   Metric definitions follow Project Rio&rsquo;s season metrics. Data: Rio netplay database.
 </footer>
@@ -178,7 +179,7 @@ function show(season){
     ps.appendChild(o);
   });
   /* Stay on the same player across seasons when they played in both;
-     otherwise open the top Adjusted ELO player. */
+     otherwise open the top ELO player. */
   const top = season.board(METRICS[0])[0];
   if(season.players.some(p=>p.name===keep)) ps.value = keep;
   else if(top) ps.value = top.name;

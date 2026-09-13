@@ -185,7 +185,7 @@ function loadCard(el){
   });
 }
 
-/* The best Adjusted ELO player in the season who isn't already on another card. */
+/* The best ELO player in the season who isn't already on another card. */
 function pickDefault(season, el){
   const taken = new Set(cards().filter(c=>c!==el && c._st.slug===season.entry.slug).map(c=>c._st.userId));
   const pick = season.board(METRICS[0]).find(p=>!taken.has(p.id))

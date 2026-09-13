@@ -9,7 +9,7 @@ window.MSSB = (() => {
    season file, so a change in the data's order cannot misalign them.
    n / d name the numerator and denominator shown under a rate. */
 const METRICS = [
-  {k:"gen_adjusted_elo",          label:"Adjusted ELO",        g:"general",  f:"int"},
+  {k:"gen_adjusted_elo",          label:"ELO",                 g:"general",  f:"int"},
   {k:"gen_games_played",          label:"Games Played",        g:"general",  f:"int"},
   {k:"bat_barrel_pct",            label:"Barrel %",            g:"batting",  f:"pct", menu:"Barrel % (bat)",  n:"barrels",           d:"contacts"},
   {k:"bat_chase_pct",             label:"Chase %",             g:"batting",  f:"pct",                          n:"chases",            d:"out-of-zone pitches"},
