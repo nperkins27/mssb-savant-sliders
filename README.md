@@ -37,10 +37,12 @@ Each season file stores, for every player and metric, the same columns as a
 whether the player qualified. Players who played at least one game are included,
 qualified or not, so anyone can look themselves up.
 
-### Netplay Superstars tournaments
+### Tournaments: Netplay Superstars and SLICE
 
-Netplay Superstars tournaments (tag sets typed Tournament named "Netplay
-Superstars NN" or "NPSSNN") are listed alongside the seasons, with the same 17
+Tournaments are tag sets typed Tournament named "Netplay Superstars NN" or
+"NPSSNN", or the official SLICE stars-off event each year ("SLICE 2023, Stars
+Off", "SLICE 2024 Superstars Off" onward; Practice and Friendly SLICE modes are
+excluded). They are listed alongside the seasons, with the same 17
 metrics but **no qualification minimums**: every player who played at least one
 game is ranked on every metric they have data for. This is a site choice; Rio's
 `season_metric` table covers seasons only. `build_seasons.py` ranks them with

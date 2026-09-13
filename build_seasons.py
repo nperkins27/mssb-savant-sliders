@@ -9,10 +9,11 @@ Run it any time -- it only does the work that is still due.
     matches what the season_metric table holds.
   * Seasons are discovered with Rio's own rule: main-line Stars Off tag sets
     from Season 4 on, plus S9, which is typed League.
-  * Netplay Superstars tournaments ("Netplay Superstars 28", "NPSS17") are
-    built the same way but with NO qualification floors: every player who
-    played is ranked on every metric they have data for. This is a site
-    choice; Rio's season_metric table covers seasons only.
+  * Tournaments -- Netplay Superstars ("Netplay Superstars 28", "NPSS17") and
+    the official SLICE stars-off events ("SLICE 2023, Stars Off", "SLICE 2026
+    Superstars Off") -- are built the same way but with NO qualification
+    floors: every player who played is ranked on every metric they have data
+    for. This is a site choice; Rio's season_metric table covers seasons only.
   * A season that has started and is not final gets rebuilt. It becomes final
     on the first build that runs more than GRACE_DAYS after its end_date, and
     is never queried again after that.
@@ -65,19 +66,26 @@ DATA_FORMAT = 2
 FIELDS = ("value", "percentile", "pool_size", "numerator", "denominator", "qualified")
 
 SEASONS_SQL = """
-select id, name, name_lowercase, start_date, end_date, 'season' as kind
+select id, name, name_lowercase, start_date, end_date, 'season' as kind, null::text as series
 from tag_set
 where id in (""" + q.SEASON_DISCOVERY_SQL + """)
 """
 
-# Netplay Superstars tournaments. name_lowercase strips punctuation, and both
-# naming styles are in use ("Netplay Superstars 16", "NPSS17"). Anchored so a
-# "Practice: ..." or variant tag set never matches.
+# Tournaments, tagged with their series. name_lowercase strips punctuation.
+#   Netplay Superstars: "Netplay Superstars 16" and "NPSS17" styles are both in use.
+#   SLICE: the official stars-off event each year -- "SLICE 2023, Stars Off", then
+#          "SLICE 2024 Superstars Off" onward. Superstars On, Big Balla and Randoms
+#          are other modes.
+# Anchored at both ends so "Practice: SLICE ..." and "Friendly: SLICE ..." (and
+# any other variant) never match.
 TOURNAMENTS_SQL = """
-select id, name, name_lowercase, start_date, end_date, 'tournament' as kind
+select id, name, name_lowercase, start_date, end_date, 'tournament' as kind,
+       case when name_lowercase ~ '^slice' then 'slice' else 'npss' end as series
 from tag_set
 where type = 'Tournament'
-  and (name_lowercase ~ '^netplaysuperstars[0-9]+$' or name_lowercase ~ '^npss[0-9]+$')
+  and (name_lowercase ~ '^netplaysuperstars[0-9]+$'
+       or name_lowercase ~ '^npss[0-9]+$'
+       or name_lowercase ~ '^slice[0-9]{4}(superstars|stars)off$')
 """
 
 # Part of a tournament's fingerprint, so changing how tournaments are ranked
@@ -485,9 +493,11 @@ def main() -> None:
 
         manifest["metric_rules"] = {m: list(rule) for m, rule in sm.cMETRIC_RULES.items()}
         current = dict(prev_by_slug)
-        for s in discovered:   # entries kept as-is still carry their kind
+        for s in discovered:   # entries kept as-is still carry their kind and series
             if s["name_lowercase"] in current:
                 current[s["name_lowercase"]]["kind"] = s["kind"]
+                if s["series"]:
+                    current[s["name_lowercase"]]["series"] = s["series"]
         todo = [s for s, action in plan if action == "build"]
         for n, s in enumerate(todo, 1):
             slug = s["name_lowercase"]
@@ -501,6 +511,7 @@ def main() -> None:
                 "slug": slug,
                 "name": s["name"],
                 "kind": s["kind"],
+                **({"series": s["series"]} if s["series"] else {}),
                 "tag_set_id": s["id"],
                 "start": et_date(s["start_date"]),
                 "end": et_date(s["end_date"]),

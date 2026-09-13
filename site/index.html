@@ -101,7 +101,7 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   (25 contacted charge swings) and HR&nbsp;% Allowed (50 at-bats faced) add King Boo and Wario.
   ELO uses the community formula, based on a player&rsquo;s latest rating in the season and their
   games and wins.
-  <b>Netplay Superstars tournaments have no minimums</b>: every player who played is ranked on every
+  <b>Tournaments (Netplay Superstars and SLICE) have no minimums</b>: every player who played is ranked on every
   metric they have data for.
   <b>Selecting several</b> seasons or tournaments ranks players on their combined totals; minimums
   apply to the totals unless a tournament is included, and ELO isn&rsquo;t shown.
@@ -197,10 +197,10 @@ function show(season){
     ? `<b>Combined selection:</b> ${esc(s.name)}. Players are ranked on their totals across all of
        them. <b>${esc(MSSB.ELO_NOTE)}</b> ` +
       (s.includesTournament
-        ? `Includes a Netplay Superstars tournament, so no minimums apply.`
+        ? `Includes a tournament, so no minimums apply.`
         : `Season minimums apply to the combined totals (10 games, and so on).`)
     : tournament
-      ? `<b>Netplay Superstars tournament: no minimums.</b> ${esc(MSSB.TOURNAMENT_NOTE)}` : "";
+      ? `<b>${esc(MSSB.tournamentSeries(s))} tournament: no minimums.</b> ${esc(MSSB.TOURNAMENT_NOTE)}` : "";
 
   ps.innerHTML = "";
   season.players.forEach(x=>{   /* already sorted by name */

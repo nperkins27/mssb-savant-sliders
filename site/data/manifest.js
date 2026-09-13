@@ -30,6 +30,21 @@ window.MSSB_MANIFEST = {
    "kind": "season"
   },
   {
+   "slug": "slice2023starsoff",
+   "name": "SLICE 2023, Stars Off",
+   "kind": "tournament",
+   "series": "slice",
+   "tag_set_id": 18,
+   "start": "2023-06-02",
+   "end": "2023-06-04",
+   "final": true,
+   "players": 36,
+   "qualified": 36,
+   "built_at": "2026-09-13T06:09:00+00:00",
+   "file": "seasons/slice2023starsoff.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+  },
+  {
    "slug": "starsoffseason6",
    "name": "Stars Off, Season 6",
    "tag_set_id": 26,
@@ -69,7 +84,8 @@ window.MSSB_MANIFEST = {
    "qualified": 40,
    "built_at": "2026-09-13T04:47:16+00:00",
    "file": "seasons/netplaysuperstars16.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "starsoffseason8",
@@ -97,7 +113,8 @@ window.MSSB_MANIFEST = {
    "qualified": 38,
    "built_at": "2026-09-13T04:47:17+00:00",
    "file": "seasons/npss17.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "s9superstarsoff",
@@ -114,6 +131,21 @@ window.MSSB_MANIFEST = {
    "kind": "season"
   },
   {
+   "slug": "slice2024superstarsoff",
+   "name": "SLICE 2024 Superstars Off",
+   "kind": "tournament",
+   "series": "slice",
+   "tag_set_id": 82,
+   "start": "2024-06-01",
+   "end": "2024-06-02",
+   "final": true,
+   "players": 40,
+   "qualified": 40,
+   "built_at": "2026-09-13T06:09:04+00:00",
+   "file": "seasons/slice2024superstarsoff.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+  },
+  {
    "slug": "npss18",
    "name": "NPSS18",
    "kind": "tournament",
@@ -125,7 +157,8 @@ window.MSSB_MANIFEST = {
    "qualified": 37,
    "built_at": "2026-09-13T04:47:19+00:00",
    "file": "seasons/npss18.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "netplaysuperstars19",
@@ -139,7 +172,8 @@ window.MSSB_MANIFEST = {
    "qualified": 34,
    "built_at": "2026-09-13T04:47:20+00:00",
    "file": "seasons/netplaysuperstars19.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "s10superstarsoff",
@@ -167,7 +201,8 @@ window.MSSB_MANIFEST = {
    "qualified": 35,
    "built_at": "2026-09-13T04:47:21+00:00",
    "file": "seasons/netplaysuperstars20.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "s11superstarsoff",
@@ -195,7 +230,8 @@ window.MSSB_MANIFEST = {
    "qualified": 46,
    "built_at": "2026-09-13T04:47:23+00:00",
    "file": "seasons/netplaysuperstars21.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "netplaysuperstars22",
@@ -209,7 +245,8 @@ window.MSSB_MANIFEST = {
    "qualified": 35,
    "built_at": "2026-09-13T04:47:24+00:00",
    "file": "seasons/netplaysuperstars22.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "netplaysuperstars23",
@@ -223,7 +260,8 @@ window.MSSB_MANIFEST = {
    "qualified": 36,
    "built_at": "2026-09-13T04:47:25+00:00",
    "file": "seasons/netplaysuperstars23.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "s12superstarsoff",
@@ -240,6 +278,21 @@ window.MSSB_MANIFEST = {
    "kind": "season"
   },
   {
+   "slug": "slice2025superstarsoff",
+   "name": "SLICE 2025 Superstars Off",
+   "kind": "tournament",
+   "series": "slice",
+   "tag_set_id": 142,
+   "start": "2025-06-20",
+   "end": "2025-06-22",
+   "final": true,
+   "players": 36,
+   "qualified": 36,
+   "built_at": "2026-09-13T06:09:05+00:00",
+   "file": "seasons/slice2025superstarsoff.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+  },
+  {
    "slug": "netplaysuperstars24",
    "name": "Netplay Superstars 24",
    "kind": "tournament",
@@ -251,7 +304,8 @@ window.MSSB_MANIFEST = {
    "qualified": 32,
    "built_at": "2026-09-13T04:47:26+00:00",
    "file": "seasons/netplaysuperstars24.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "netplaysuperstars25",
@@ -265,7 +319,8 @@ window.MSSB_MANIFEST = {
    "qualified": 41,
    "built_at": "2026-09-13T04:47:27+00:00",
    "file": "seasons/netplaysuperstars25.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "interimsuperstarsoff",
@@ -307,7 +362,8 @@ window.MSSB_MANIFEST = {
    "qualified": 35,
    "built_at": "2026-09-13T04:47:28+00:00",
    "file": "seasons/netplaysuperstars26.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   },
   {
    "slug": "s14superstarsoff",
@@ -335,6 +391,22 @@ window.MSSB_MANIFEST = {
    "qualified": 26,
    "built_at": "2026-09-13T04:47:29+00:00",
    "file": "seasons/netplaysuperstars27.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
+  },
+  {
+   "slug": "slice2026superstarsoff",
+   "name": "SLICE 2026 Superstars Off",
+   "kind": "tournament",
+   "series": "slice",
+   "tag_set_id": 214,
+   "start": "2026-07-11",
+   "end": "2026-07-12",
+   "final": true,
+   "players": 30,
+   "qualified": 30,
+   "built_at": "2026-09-13T06:09:07+00:00",
+   "file": "seasons/slice2026superstarsoff.js",
    "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
   },
   {
@@ -347,7 +419,7 @@ window.MSSB_MANIFEST = {
    "final": false,
    "players": 96,
    "qualified": 24,
-   "built_at": "2026-09-13T05:05:32+00:00",
+   "built_at": "2026-09-13T06:09:09+00:00",
    "file": "seasons/s15superstarsoff.js",
    "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
@@ -363,11 +435,12 @@ window.MSSB_MANIFEST = {
    "qualified": 31,
    "built_at": "2026-09-13T04:47:34+00:00",
    "file": "seasons/netplaysuperstars28.js",
-   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8",
+   "series": "npss"
   }
  ],
- "updated_at": "2026-09-13T05:05:32+00:00",
- "checked_at": "2026-09-13T05:05:32+00:00",
+ "updated_at": "2026-09-13T06:09:09+00:00",
+ "checked_at": "2026-09-13T06:09:09+00:00",
  "metric_rules": {
   "bat_barrel_pct": [
    true,
