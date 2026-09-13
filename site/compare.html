@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compare Players · MSSB Savant Sliders</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .controls .note{color:var(--muted);font-size:12.5px;margin:0 0 8px}
+
+  /* Cards fill the row: two share it half and half; more wrap at 320px. */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:18px}
+  .controls .note{min-width:0}
+  .card{padding:10px 16px 16px;min-width:0;user-select:none;-webkit-user-select:none}
+
+  .card-head{display:flex;align-items:center;justify-content:space-between;margin:0 -8px 8px}
+  .grip{display:flex;align-items:center;gap:7px;background:none;border:1px solid transparent;
+        padding:4px 8px;color:var(--muted);cursor:grab;touch-action:none;font-family:var(--sans);
+        font-size:11px;text-transform:uppercase;letter-spacing:.7px}
+  .grip:hover{border-color:var(--line);color:var(--ink)}
+  .card-remove{background:none;border:1px solid transparent;font-size:23px;line-height:1;
+               width:32px;height:32px;cursor:pointer;color:var(--muted)}
+  .card-remove:hover{color:var(--ink);border-color:var(--line)}
+
+  /* minmax(0,1fr) and min-width:0 let the menus shrink below their longest
+     option, which would otherwise push a narrow card past the screen edge. */
+  .card-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:12px}
+  .card-controls label{display:block;min-width:0;font-size:11px;color:var(--muted);text-transform:uppercase;
+                       letter-spacing:.7px}
+  .card-controls select{display:block;width:100%;margin-top:5px;background:#fff;color:var(--ink);
+                        border:1px solid var(--line);padding:6px 8px;font-size:13.5px;
+                        font-family:var(--sans);text-transform:none;letter-spacing:0}
+
+  .c-title{background:var(--chrome);border:1px solid #9a9a9a;padding:5px 11px;font-size:21px;
+           line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .c-meta{color:var(--muted);font-size:12px;line-height:1.5;margin:7px 0 2px;min-height:18px}
+  .floor-note{color:#8a4b00}
+
+  /* Every row is the same height in every card, so a metric sits at the same
+     height across the whole comparison and can be read straight across. */
+  .card .grp{font-size:19px;margin:14px 0 4px}
+  .crow{display:grid;grid-template-columns:minmax(0,1fr) 56px;gap:10px;align-items:center;height:62px}
+  .cstack{display:flex;flex-direction:column;min-width:0}
+  .clab{font-size:12.5px;font-weight:700;line-height:1.35;white-space:nowrap;overflow:hidden;
+        text-overflow:ellipsis}
+  .clab .raw{display:inline;margin:0 0 0 6px}
+  .card .why{height:15px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .strack{height:18px;margin-top:2px}
+  .card .sval{height:42px;font-size:19px}
+  .card .sval.na{font-size:14px}
+
+  /* ---- dragging ---- */
+  .card-placeholder{border:2px dashed var(--boxline);background:rgba(123,167,204,.14)}
+  .card.dragging{box-shadow:0 16px 40px rgba(0,0,0,.28);opacity:.97}
+  body.is-dragging, body.is-dragging *{cursor:grabbing !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>MSSB <b>Savant</b> Sliders</h1>
+  <p class="meta">Mario Superstar Baseball &mdash; compare players, in the same season or across seasons</p>
+  <nav class="tabs" aria-label="Pages">
+    <a href="index.html">Leaderboard</a>
+    <a href="compare.html" aria-current="page">Compare players</a>
+  </nav>
+</header>
+
+<div id="warn"></div>
+
+<div class="controls">
+  <div>
+    <button type="button" class="btn" id="add">+ Add comparison</button>
+  </div>
+  <p class="note" id="count"></p>
+</div>
+
+<div class="cards" id="cards"></div>
+<div class="sr-only" id="live" aria-live="polite"></div>
+
+<footer>
+  Pick a season and a player on each card. Add up to 12 cards, and drag a card to reorder it
+  (on a touch screen, drag it by its handle). The address bar keeps the comparison, so a
+  reload or a shared link brings it back.
+  Percentiles are 0&ndash;100 where <b>100 is always best</b>, and each one ranks a player only
+  against others <b>in the same season</b>. Across seasons, a 90 in S9 and a 90 in S15 are
+  measured against different players, so compare the raw values too.
+  Metric definitions follow Project Rio&rsquo;s season metrics. Data: Rio netplay database.
+</footer>
+</div>
+
+<script src="data/manifest.js"></script>
+<script src="shared.js"></script>
+<script>
+"use strict";
+const {METRICS, GROUPS, GCOLOR, fmt, esc, whyNot} = MSSB;
+const MAX_CARDS = 12, MIN_CARDS = 2;
+const grid = document.getElementById("cards");
+const GRIP = `<svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"><g fill="currentColor">
+  <circle cx="2.5" cy="2.5" r="1.5"/><circle cx="7.5" cy="2.5" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/>
+  <circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13.5" r="1.5"/><circle cx="7.5" cy="13.5" r="1.5"/></g></svg>`;
+
+const cards = ()=>[...grid.querySelectorAll(".card")];
+const announce = msg=>{ document.getElementById("live").textContent = msg; };
+
+/* ---- the comparison lives in the URL: #c=<season>~<user id>,... ---- */
+function readHash(){
+  const m = location.hash.match(/^#c=([^&]*)/);
+  if(!m) return [];
+  return decodeURIComponent(m[1]).split(",").slice(0, MAX_CARDS).map(part=>{
+    const [slug, id] = part.split("~");
+    return {slug, userId: /^\d+$/.test(id || "") ? +id : null};
+  }).filter(spec=>MSSB.bySlug[spec.slug]);
+}
+function writeHash(){
+  const specs = cards().map(el=>`${el._st.slug}~${el._st.userId ?? ""}`);
+  history.replaceState(null, "", "#c=" + specs.join(","));
+}
+
+/* ---- cards ---- */
+function addCard(spec){
+  const el = document.createElement("section");
+  el.className = "card panel";
+  el._st = {slug: spec.slug, userId: spec.userId, season: null};
+  el.innerHTML = `
+    <div class="card-head">
+      <button type="button" class="grip" aria-label="Move card: drag it, or use the arrow keys">${GRIP}<span>Drag</span></button>
+      <button type="button" class="card-remove" aria-label="Remove this card">&times;</button>
+    </div>
+    <div class="card-controls">
+      <label>Season<select class="c-season"></select></label>
+      <label>Player<select class="c-player"></select></label>
+    </div>
+    <div class="c-title">&nbsp;</div>
+    <div class="c-meta"></div>
+    <div class="c-body"></div>`;
+
+  const ss = el.querySelector(".c-season");
+  MSSB.seasons.forEach(s=>{
+    const o = document.createElement("option");
+    o.value = s.slug; o.textContent = s.name + (s.final ? "" : " (in progress)");
+    ss.appendChild(o);
+  });
+  ss.value = spec.slug;
+  ss.onchange = ()=>{ el._st.slug = ss.value; loadCard(el); };
+  el.querySelector(".c-player").onchange = e=>{
+    el._st.userId = +e.target.value; renderCard(el); writeHash();
+  };
+  el.querySelector(".card-remove").onclick = ()=>{
+    el.remove(); refreshChrome(); writeHash(); announce("Card removed.");
+  };
+  el.querySelector(".grip").onkeydown = e=>moveByKey(el, e);
+
+  grid.appendChild(el);
+  loadCard(el);
+  refreshChrome();
+  return el;
+}
+
+function loadCard(el){
+  const slug = el._st.slug;
+  el.querySelector(".c-body").innerHTML = `<p class="sub">Loading&hellip;</p>`;
+  MSSB.loadSeason(slug).then(season=>{
+    if(el._st.slug !== slug || !el.isConnected) return;   /* changed or removed meanwhile */
+    el._st.season = season;
+    const ps = el.querySelector(".c-player");
+    ps.innerHTML = "";
+    season.players.forEach(p=>{   /* already sorted by name */
+      const o = document.createElement("option"); o.value = String(p.id); o.textContent = p.name;
+      ps.appendChild(o);
+    });
+    /* A user id is the same in every season, so switching season keeps the
+       player whenever they played in the new one. */
+    if(!season.byId.has(el._st.userId)) el._st.userId = pickDefault(season, el);
+    if(el._st.userId != null) ps.value = String(el._st.userId);
+    renderCard(el);
+    writeHash();
+  }, err=>{
+    if(el._st.slug !== slug) return;
+    el._st.season = null;
+    el.querySelector(".c-player").innerHTML = "";
+    el.querySelector(".c-title").innerHTML = "&nbsp;";
+    el.querySelector(".c-meta").textContent = "";
+    el.querySelector(".c-body").innerHTML = `<div class="warn">${esc(err.message)}</div>`;
+  });
+}
+
+/* The best Adjusted ELO player in the season who isn't already on another card. */
+function pickDefault(season, el){
+  const taken = new Set(cards().filter(c=>c!==el && c._st.slug===season.entry.slug).map(c=>c._st.userId));
+  const pick = season.board(METRICS[0]).find(p=>!taken.has(p.id))
+    || season.players.find(p=>!taken.has(p.id)) || season.players[0];
+  return pick ? pick.id : null;
+}
+
+function renderCard(el){
+  const season = el._st.season;
+  if(!season) return;
+  const s = season.entry, p = season.byId.get(el._st.userId);
+  const title = el.querySelector(".c-title"), meta = el.querySelector(".c-meta"),
+        body = el.querySelector(".c-body");
+  if(season.missing.length){
+    title.innerHTML = "&nbsp;"; meta.textContent = "";
+    body.innerHTML = `<div class="warn">${esc(s.name)} is missing ${esc(season.missing.join(", "))}.</div>`;
+    return;
+  }
+  if(!p){
+    title.innerHTML = "&nbsp;";
+    meta.innerHTML = esc(s.name) + MSSB.badge(s);
+    body.innerHTML = `<p class="sub">No players in this season yet.</p>`;
+    return;
+  }
+  const games = season.games(p), minGames = (MSSB.rules.gen_games_played || [])[1];
+  title.textContent = p.name;
+  meta.innerHTML = `${esc(s.name)}${MSSB.badge(s)} &middot; ${games} game${games===1 ? "" : "s"}` +
+    (minGames != null && games < minGames
+      ? ` &middot; <span class="floor-note">below the ${minGames}-game floor</span>` : "");
+  body.innerHTML = GROUPS.map(([gk, gl])=>
+    (gl ? `<div class="grp">${gl}</div>` : "") +
+    METRICS.filter(m=>m.g===gk).map(m=>rowHTML(season, p, m, games)).join("")
+  ).join("");
+}
+
+function rowHTML(season, p, m, games){
+  const c = season.cell(p, m) || {};
+  const counts = c.den != null ? ` · ${c.num}/${c.den}` : "";
+  const why = c.ok ? "" : whyNot(m, c, games);
+  const tip = c.den != null ? `${c.num} ${m.n} of ${c.den} ${m.d}` : `${m.label}: ${fmt(m, c.value)}`;
+  const box = c.ok
+    ? `<div class="sval" title="${c.pct.toFixed(1)}th percentile of ${c.pool} players in ${esc(season.entry.name)}">${Math.round(c.pct)}</div>`
+    : `<div class="sval na" title="${esc(why)}">n/a</div>`;
+  return `<div class="crow">
+    <div class="cstack">
+      <div class="clab" title="${esc(tip)}">${m.label}<span class="raw">${fmt(m, c.value)}${counts}</span></div>
+      <div class="why">${esc(why)}</div>
+      <div class="strack"><i style="width:${c.ok ? c.pct : 0}%;background:${GCOLOR[m.g]}"></i></div>
+    </div>${box}</div>`;
+}
+
+function refreshChrome(){
+  const n = cards().length;
+  document.getElementById("add").disabled = n >= MAX_CARDS;
+  document.getElementById("count").textContent =
+    `${n} of ${MAX_CARDS} cards` + (n >= MAX_CARDS ? " (maximum)" : "") + " · drag a card to reorder it";
+  cards().forEach(c=>{ c.querySelector(".card-remove").hidden = n <= MIN_CARDS; });
+}
+
+document.getElementById("add").onclick = ()=>{
+  if(cards().length >= MAX_CARDS) return;
+  const last = cards().at(-1);
+  const el = addCard({slug: last ? last._st.slug : MSSB.seasons.at(-1).slug, userId: null});
+  el.scrollIntoView({behavior: "smooth", block: "nearest"});
+  announce(`Card ${cards().length} added.`);
+};
+
+/* ---- reordering: keyboard ---- */
+function moveByKey(el, e){
+  const all = cards(), i = all.indexOf(el);
+  const to = {ArrowLeft: i-1, ArrowUp: i-1, ArrowRight: i+1, ArrowDown: i+1, Home: 0, End: all.length-1}[e.key];
+  if(to === undefined) return;
+  e.preventDefault();
+  const j = Math.max(0, Math.min(all.length-1, to));
+  if(j === i) return;
+  grid.insertBefore(el, j < i ? all[j] : all[j].nextSibling);
+  el.querySelector(".grip").focus();
+  writeHash();
+  announce(`Moved to position ${j+1} of ${all.length}.`);
+}
+
+/* ---- reordering: drag ----
+   Pointer events rather than HTML drag-and-drop, which never fires for touch.
+   The card follows the pointer while a placeholder holds its slot in the grid;
+   the placeholder moves to whichever card the pointer is over. */
+let drag = null;
+
+grid.addEventListener("pointerdown", e=>{
+  if(e.button !== 0 || drag) return;
+  const card = e.target.closest(".card");
+  if(!card || e.target.closest("select, .card-remove")) return;
+  /* Touch and pen start a drag only from the handle, so the page still scrolls. */
+  if(e.pointerType !== "mouse" && !e.target.closest(".grip")) return;
+  if(e.pointerType === "mouse") e.preventDefault();
+  drag = {card, pointerId: e.pointerId, x0: e.clientX, y0: e.clientY,
+          x: e.clientX, y: e.clientY, started: false};
+});
+
+window.addEventListener("pointermove", e=>{
+  if(!drag || e.pointerId !== drag.pointerId) return;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if(!drag.started){
+    if(Math.hypot(drag.x - drag.x0, drag.y - drag.y0) < 6) return;   /* a click, not a drag */
+    startDrag();
+  }
+  follow();
+});
+window.addEventListener("pointerup", endDrag);
+window.addEventListener("pointercancel", endDrag);
+
+function startDrag(){
+  const card = drag.card, r = card.getBoundingClientRect();
+  drag.dx = drag.x0 - r.left;
+  drag.dy = drag.y0 - r.top;
+  drag.ph = document.createElement("div");
+  drag.ph.className = "card-placeholder";
+  drag.ph.style.minHeight = r.height + "px";
+  grid.insertBefore(drag.ph, card);
+  Object.assign(card.style, {position: "fixed", left: r.left + "px", top: r.top + "px",
+    width: r.width + "px", height: r.height + "px", zIndex: 50, pointerEvents: "none", margin: 0});
+  card.classList.add("dragging");
+  document.body.classList.add("is-dragging");
+  drag.started = true;
+  requestAnimationFrame(autoScroll);
+}
+
+function follow(){
+  const {card, ph, x, y} = drag;
+  card.style.left = (x - drag.dx) + "px";
+  card.style.top = (y - drag.dy) + "px";
+  const others = [...grid.children].filter(n=>n !== card);
+  const over = others.find(n=>{
+    if(n === ph) return false;
+    const r = n.getBoundingClientRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  });
+  if(!over) return;
+  grid.insertBefore(ph, others.indexOf(over) < others.indexOf(ph) ? over : over.nextSibling);
+}
+
+/* Scroll while the pointer is held near the top or bottom of the window. */
+function autoScroll(){
+  if(!drag || !drag.started) return;
+  const edge = 70;
+  let dy = 0;
+  if(drag.y < edge) dy = -Math.ceil((edge - drag.y) / 4);
+  else if(drag.y > innerHeight - edge) dy = Math.ceil((drag.y - (innerHeight - edge)) / 4);
+  if(dy){ window.scrollBy(0, dy); follow(); }
+  requestAnimationFrame(autoScroll);
+}
+
+function endDrag(e){
+  if(!drag || (e && e.pointerId !== drag.pointerId)) return;
+  const {card, ph, started} = drag;
+  drag = null;
+  if(!started) return;
+  grid.insertBefore(card, ph);
+  ph.remove();
+  card.removeAttribute("style");
+  card.classList.remove("dragging");
+  document.body.classList.remove("is-dragging");
+  writeHash();
+  announce(`Moved to position ${cards().indexOf(card)+1} of ${cards().length}.`);
+}
+
+function init(){
+  if(!MSSB.seasons.length){
+    document.getElementById("warn").innerHTML = `<div class="warn">No season data found. Run
+      <code>python build_seasons.py</code> to generate <code>site/data/</code>.</div>`;
+    document.getElementById("add").disabled = true;
+    return;
+  }
+  const specs = readHash();
+  while(specs.length < MIN_CARDS) specs.push({slug: MSSB.seasons.at(-1).slug, userId: null});
+  specs.forEach(addCard);
+}
+init();
+</script>
+</body>
+</html>

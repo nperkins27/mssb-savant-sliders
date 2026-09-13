@@ -17,7 +17,9 @@ on:
   push:
     branches: [main]
     paths:
-      - "site/index.html"
+      - "site/*.html"
+      - "site/*.js"
+      - "site/*.css"
       - "season_metrics.py"
       - "season_metrics_sql.py"
       - "build_seasons.py"

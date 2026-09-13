@@ -7,7 +7,10 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 
 | Path | What it is |
 |---|---|
-| `site/index.html` | The dashboard page |
+| `site/index.html` | Leaderboard page: one season, ranked by a chosen metric, with one player's sliders |
+| `site/compare.html` | Compare page: 2 to 12 season + player cards, reorderable by drag. The comparison is kept in the URL (`#c=<season>~<user id>,...`) |
+| `site/shared.js` | Used by both pages: the metric list, the **metric definitions text** (`DEFINITIONS`), season loading and the definitions dialog |
+| `site/shared.css` | Styles used by both pages |
 | `site/data/manifest.js` / `.json` | List of seasons: dates, final or in progress, when each was built |
 | `site/data/seasons/<slug>.js` | One season's players and all 14 metrics, loaded when that season is picked |
 | `build_seasons.py` | Builds whatever season data is due (read-only against the database) |
@@ -88,7 +91,7 @@ Change them upstream in ProjectRio-web first, then copy `app/season_metrics.py` 
 `season_metrics.py` unchanged (keep the three-line provenance comment at the top),
 and carry any query change into `season_metrics_sql.py`, writing SQLAlchemy's
 `:name` parameters as `%(name)s`. If a metric is added, removed or renamed, update
-the `METRICS` list in `site/index.html` too. Push: the new fingerprint rebuilds
+the `METRICS` list and `DEFINITIONS` in `site/shared.js` too. Push: the new fingerprint rebuilds
 every season. The page looks metrics up by name, so if the data and the page
 disagree it lists what is missing rather than showing wrong numbers.
 
