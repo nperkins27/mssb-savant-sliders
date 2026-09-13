@@ -35,9 +35,9 @@
             background:var(--chrome);border:1px solid var(--line);padding:13px 16px;margin-bottom:18px}
   .controls label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;
                   letter-spacing:.7px;margin-bottom:5px}
-  .controls select,.controls input{background:#fff;color:var(--ink);border:1px solid var(--line);
+  .controls select{background:#fff;color:var(--ink);border:1px solid var(--line);
             padding:7px 9px;font-size:14px;font-family:var(--sans);min-width:210px}
-  .controls select:focus-visible,.controls input:focus-visible{outline:2px solid var(--boxline);outline-offset:1px}
+  .controls select:focus-visible{outline:2px solid var(--boxline);outline-offset:1px}
 
   .cols{display:grid;grid-template-columns:360px minmax(0,1fr);gap:26px;align-items:start}
   @media(max-width:1040px){.cols{grid-template-columns:1fr}}
@@ -58,12 +58,10 @@
   .lb-track{background:var(--track);border:1px solid var(--trackline);height:9px;margin-top:3px}
   .lb-track>i{display:block;height:100%}
 
-  /* ---- player name, echoing the Tableau field ---- */
-  .pname{display:flex;align-items:center;gap:9px;margin-bottom:18px}
-  .pname .box{flex:1;background:var(--chrome);border:1px solid #9a9a9a;padding:7px 13px;
+  /* ---- player name ---- */
+  .pname{margin-bottom:18px}
+  .pname .box{background:var(--chrome);border:1px solid #9a9a9a;padding:7px 13px;
               font-size:26px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pname .caret{width:34px;height:34px;background:var(--chrome);border:1px solid #9a9a9a;
-                display:flex;align-items:center;justify-content:center;color:#333;font-size:11px}
 
   /* ---- slider rows ---- */
   .grp{font-family:var(--serif);font-size:23px;margin:24px 0 13px}
@@ -114,10 +112,6 @@
     <label for="player">Player</label>
     <select id="player"></select>
   </div>
-  <div>
-    <label for="q">Filter leaderboard</label>
-    <input id="q" type="text" placeholder="type a username&hellip;" autocomplete="off">
-  </div>
 </div>
 
 <div class="cols">
@@ -129,7 +123,6 @@
   <div class="panel">
     <div class="pname">
       <div class="box" id="pd-title">Player</div>
-      <div class="caret" aria-hidden="true">&#9660;</div>
     </div>
     <div id="pd"></div>
   </div>
@@ -220,7 +213,6 @@ function init(){
 
   ms.onchange = renderLB;
   document.getElementById("player").onchange = renderPlayer;
-  document.getElementById("q").oninput = renderLB;
   ss.onchange = ()=>selectSeason(+ss.value);
 
   selectSeason(SEASONS.length-1);
@@ -316,28 +308,22 @@ function board(m){
 
 function renderLB(){
   const m = METRICS.find(x=>x.k===document.getElementById("metric").value);
-  const q = document.getElementById("q").value.trim().toLowerCase();
   document.getElementById("lb-title").textContent = "Leaderboard — " + menuLabel(m);
   const ranked = board(m);
   document.getElementById("lb-sub").textContent =
     `${ranked.length} qualified, ranked by percentile. Click a name to load it.`;
   const colr = GCOLOR[m.g];
   const el = document.getElementById("lb");
-  const rows = ranked.map((p,i)=>({p, rank:i+1}))
-    .filter(x=>!q || x.p.name.toLowerCase().includes(q));
-  const empty = ranked.length
-    ? `<p class="sub">No players match.</p>`
-    : `<p class="sub">No qualified players yet. Players appear once they reach 10 games,
-       usually a few days into a new season.</p>`;
-  el.innerHTML = rows.map(({p, rank})=>{
+  el.innerHTML = ranked.map((p,i)=>{
     const c = cell(p,m);
     return `<div class="lb-row">
-      <div class="lb-rank">${rank}</div>
+      <div class="lb-rank">${i+1}</div>
       <div class="lb-name" data-u="${esc(p.name)}">${esc(p.name)}</div>
       <div class="lb-val">${fmt(m,c.value)}</div>
       <div class="lb-barwrap"><div class="lb-track"><i style="width:${c.pct}%;background:${colr}"></i></div></div>
     </div>`;
-  }).join("") || empty;
+  }).join("") || `<p class="sub">No qualified players yet. Players appear once they reach
+    10 games, usually a few days into a new season.</p>`;
   el.querySelectorAll(".lb-name").forEach(n=>{
     n.onclick = ()=>{ document.getElementById("player").value=n.dataset.u; renderPlayer(); };
   });
