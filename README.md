@@ -12,7 +12,7 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 | `site/shared.js` | Used by both pages: the metric list, the **metric definitions text** (`DEFINITIONS`), season loading and the definitions dialog |
 | `site/shared.css` | Styles used by both pages |
 | `site/data/manifest.js` / `.json` | List of seasons: dates, final or in progress, when each was built |
-| `site/data/seasons/<slug>.js` | One season's players and all 17 metrics, loaded when that season is picked |
+| `site/data/seasons/<slug>.js` | One season's players and all 18 metrics, loaded when that season is picked |
 | `build_seasons.py` | Builds whatever season data is due (read-only against the database) |
 | `season_metrics.py` | Metric definitions, floors, adjusted ELO and percentile ranking. **Vendored verbatim** from ProjectRio-web |
 | `season_metrics_sql.py` | The season discovery rule and the three per-season queries, vendored from ProjectRio-web |
@@ -27,8 +27,10 @@ The two definition files are copied from that PR rather than rewritten, and
 `build_seasons.py` makes the same four queries per season as Rio's job, so the
 numbers match.
 
-**17 metrics.** The PR's 14, plus three that are not pushed to the PR yet:
-Runs/9 and Runs Against/9 (general) and Special Catches/9 (pitching/fielding).
+**18 metrics.** The PR's 14, plus four that are not pushed to the PR yet:
+Runs/9 and Runs Against/9 (general), 2-Strike Whiff % (batting: whiffs ÷ swings
+on pitches thrown with two strikes already in the count) and Special Catches/9
+(pitching/fielding).
 Per-9 metrics are 27 × count ÷ outs: runs against and special catches over the
 outs the player's team recorded in the field, runs over the outs it made at bat.
 

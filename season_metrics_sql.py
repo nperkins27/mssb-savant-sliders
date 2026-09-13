@@ -5,8 +5,8 @@ Copied mechanically: the SQL text is unchanged except that SQLAlchemy's
 :name bind parameters are written as psycopg's %(name)s. Keep it in step with
 upstream; season_metrics.py documents the definitions.
 
-NOTE: includes the special-catches column and RUNS_SQL for the three per-9
-metrics, which are not pushed to the PR yet.
+NOTE: includes the special-catches and two-strike whiff columns and RUNS_SQL
+for the per-9 metrics, which are not pushed to the PR yet.
 """
 
 # S9 Superstars Off is typed 'League' rather than 'Season', so it cannot be
@@ -41,6 +41,7 @@ BATTING_ORDER = (
     'bat_charge_timing_pct',
     'bat_slap_timing_pct',
     'bat_charge_down_input_pct',
+    'bat_two_strike_whiff_pct',
 )
 
 PITCHING_ORDER = (
@@ -52,7 +53,7 @@ PITCHING_ORDER = (
 )
 
 # One pass over the season's events, producing every numerator and denominator
-# for both roles. Batting fills all eight pairs; pitching fills five and pads
+# for both roles. Batting fills all nine pairs; pitching fills five and pads
 # the rest with NULL so the two halves can be UNIONed. The fifth pitching pair
 # is special catches, whose denominator (outs recorded on defense) is NULL here
 # and filled in from cRUNS_SQL, the same outs the runs-against rate uses.
@@ -62,7 +63,8 @@ PITCHING_ORDER = (
 # line drive, 14 sac fly and 16 foul catch are the outs made by catching the
 # ball. type_of_swing 1 slap, 2 charge. type_of_contact 1/2/3 are the barrel
 # values out of 0-4. input_direction_stick 4/5/6 are down, down-left,
-# down-right. fielding_summary.action 2 is a sliding (diving) play and 3 a
+# down-right. event.strikes is the count going INTO the pitch (every S14
+# strikeout has strikes = 2). fielding_summary.action 2 is a sliding (diving) play and 3 a
 # wall jump; jump = 1 is a jump. A special catch is a catch made with any of
 # the three.
 AGGREGATE_SQL = '''
@@ -78,6 +80,7 @@ ev AS MATERIALIZED (
         CASE WHEN e.half_inning = 0 THEN g.home_player_id ELSE g.away_player_id END AS pitcher_user,
         ch.name_lowercase AS batter_char,
         e.result_of_ab,
+        e.strikes,
         ps.type_of_swing,
         ps.in_strikezone,
         ps.contact_summary_id,
@@ -116,7 +119,10 @@ SELECT 'bat' AS role, batter_user AS user_id,
     COUNT(*) FILTER (WHERE type_of_swing = 2 AND contact_summary_id IS NOT NULL
                        AND batter_char = ANY(%(power_chars)s) AND stick IN (4,5,6))                     AS n8,
     COUNT(*) FILTER (WHERE type_of_swing = 2 AND contact_summary_id IS NOT NULL
-                       AND batter_char = ANY(%(power_chars)s))                                          AS d8
+                       AND batter_char = ANY(%(power_chars)s))                                          AS d8,
+    COUNT(*) FILTER (WHERE strikes = 2 AND type_of_swing IS NOT NULL AND type_of_swing <> 0
+                       AND contact_summary_id IS NULL)                                               AS n9,
+    COUNT(*) FILTER (WHERE strikes = 2 AND type_of_swing IS NOT NULL AND type_of_swing <> 0)         AS d9
 FROM ev
 WHERE batter_user IS NOT NULL
 GROUP BY batter_user
@@ -136,7 +142,7 @@ SELECT 'pitch', pitcher_user,
     COUNT(*) FILTER (WHERE result_of_ab IN (5,6,14,16)
                        AND (field_action IN (2,3) OR field_jump = 1))                                AS n5,
     NULL AS d5,
-    NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 FROM ev
 WHERE pitcher_user IS NOT NULL
 GROUP BY pitcher_user

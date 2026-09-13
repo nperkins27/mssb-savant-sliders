@@ -1,8 +1,9 @@
 # Vendored VERBATIM from ProjectRio-web app/season_metrics.py
 # (https://github.com/ProjectRio/ProjectRio-web/pull/154), so this site computes exactly what Rio's season_metric
 # table holds. Do not edit it here: change it upstream, then copy it back.
-# NOTE: includes gen_runs_per_9, gen_runs_against_per_9 and
-# pitch_special_catches_per_9, which are not pushed to the PR yet.
+# NOTE: includes gen_runs_per_9, gen_runs_against_per_9, pitch_special_catches_per_9
+# and bat_two_strike_whiff_pct, and removes bro(b) from cCHARGE_TIMING_CHARS
+# (cPOWER_CHARS unchanged). None of that is pushed to the PR yet.
 '''Computation of per-season advanced percentiles (the "Savant Sliders" set).
 
 Split deliberately into two halves:
@@ -30,6 +31,7 @@ cSEASON_METRICS = (
     'bat_barrel_pct',
     'bat_chase_pct',
     'bat_whiff_pct',
+    'bat_two_strike_whiff_pct',
     'bat_ozone_contact_pct',
     'bat_k_pct',
     'bat_charge_timing_pct',
@@ -48,13 +50,16 @@ cSEASON_METRICS = (
 
 
 # --- character sets --------------------------------------------------------
-# Charge Timing uses the original nine pull-power hitters. Charge Down-Input
-# and the pitching home run rate use those nine plus King Boo and Wario: the
-# 7-8-9 frame window that defines good charge timing does not suit those two,
-# but stick input and home run prevention are measurable against any of them.
-cCHARGE_TIMING_CHARS = ('bro(h)', 'bro(f)', 'bro(b)', 'bowser', 'petey',
+# Charge Down-Input and the pitching home run rate use eleven power
+# characters. Charge Timing uses eight of them: the 7-8-9 frame window that
+# defines good charge timing does not suit King Boo, Wario or Boomerang Bro
+# (bro(b)), but stick input and home run prevention are measurable against any
+# of them. Listed separately, not derived from each other, so a change to one
+# metric's characters cannot silently change another's.
+cPOWER_CHARS = ('bro(h)', 'bro(f)', 'bro(b)', 'bowser', 'petey',
+                'pianta(r)', 'pianta(y)', 'pianta(b)', 'dk', 'king boo', 'wario')
+cCHARGE_TIMING_CHARS = ('bro(h)', 'bro(f)', 'bowser', 'petey',
                         'pianta(r)', 'pianta(y)', 'pianta(b)', 'dk')
-cPOWER_CHARS = cCHARGE_TIMING_CHARS + ('king boo', 'wario')
 
 
 # --- metric registry -------------------------------------------------------
@@ -70,6 +75,7 @@ cMETRIC_RULES = {
     'bat_barrel_pct':            (True,  cMIN_GAMES, None),
     'bat_chase_pct':             (False, cMIN_GAMES, None),
     'bat_whiff_pct':             (False, cMIN_GAMES, None),
+    'bat_two_strike_whiff_pct':  (False, cMIN_GAMES, None),
     'bat_ozone_contact_pct':     (True,  cMIN_GAMES, None),
     'bat_k_pct':                 (False, cMIN_GAMES, None),
     'bat_charge_timing_pct':     (True,  cMIN_GAMES, 25),

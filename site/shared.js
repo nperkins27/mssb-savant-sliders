@@ -17,6 +17,7 @@ const METRICS = [
   {k:"bat_barrel_pct",            label:"Barrel %",            g:"batting",  f:"pct", menu:"Barrel % (bat)",  n:"barrels",           d:"contacts"},
   {k:"bat_chase_pct",             label:"Chase %",             g:"batting",  f:"pct",                          n:"chases",            d:"out-of-zone pitches"},
   {k:"bat_whiff_pct",             label:"Whiff %",             g:"batting",  f:"pct", menu:"Whiff % (bat)",   n:"whiffs",            d:"swings"},
+  {k:"bat_two_strike_whiff_pct",  label:"2-Strike Whiff %",    g:"batting",  f:"pct",                          n:"whiffs",            d:"2-strike swings"},
   {k:"bat_ozone_contact_pct",     label:"O-Zone Contact %",    g:"batting",  f:"pct",                          n:"contacts",          d:"out-of-zone swings"},
   {k:"bat_k_pct",                 label:"K %",                 g:"batting",  f:"pct", menu:"K % (bat)",       n:"strikeouts",        d:"plate appearances"},
   {k:"bat_charge_timing_pct",     label:"Charge Timing",       g:"batting",  f:"pct",                          n:"well-timed swings", d:"charge swings"},
@@ -47,13 +48,15 @@ const DEFINITIONS = {
     "Share of pitches outside the strike zone that the batter swings at.",
   bat_whiff_pct:
     "Share of the batter's swings that miss the ball entirely.",
+  bat_two_strike_whiff_pct:
+    "Share of the batter's swings with two strikes in the count (before the pitch) that miss the ball entirely.",
   bat_ozone_contact_pct:
     "Share of the batter's swings at pitches outside the strike zone that still make contact.",
   bat_k_pct:
     "Share of the batter's plate appearances that end in a strikeout.",
   bat_charge_timing_pct:
     "Share of charge swings that make contact on frames 7–9, out of charge swings making contact on frames 2–10. " +
-    "Counts only Bowser, Petey, DK and the Bro and Pianta variants.",
+    "Counts only Bowser, Petey, DK, Hammer Bro, Fire Bro and the Pianta variants.",
   bat_slap_timing_pct:
     "Share of slap swings that make contact on frames 3–5, out of slap swings making contact on frames 2–10. " +
     "Counts every character.",
