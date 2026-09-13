@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MSSB Savant Sliders</title>
+<style>
+  :root{
+    --bg:#d4d4d4;
+    --chrome:#e6e6e6;
+    --line:#b9b9b9;
+    --track:#e2e2e2;
+    --trackline:#cfcfcf;
+    --green:#93dd93;
+    --blue:#5b8db8;
+    --ink:#1c1c1c;
+    --muted:#5b5b5b;
+    --boxbg:#fbfbfb;
+    --boxline:#7ba7cc;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:Arial,Helvetica,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px}
+  .wrap{max-width:1440px;margin:0 auto;padding:22px 24px 60px}
+
+  header h1{font-family:var(--serif);font-weight:400;font-size:30px;margin:0 0 4px}
+  header h1 b{font-weight:700}
+  #meta{color:var(--muted);font-size:12.5px;margin:0 0 16px;line-height:1.6}
+  .badge{display:inline-block;background:#2f6b2f;color:#e3f6e3;font-size:11px;font-weight:700;
+         padding:2px 9px;border-radius:20px;margin-left:6px;vertical-align:middle}
+  .badge.live{background:#7a4a00;color:#ffd88a}
+
+  .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;
+            background:var(--chrome);border:1px solid var(--line);padding:13px 16px;margin-bottom:18px}
+  .controls label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:.7px;margin-bottom:5px}
+  .controls select,.controls input{background:#fff;color:var(--ink);border:1px solid var(--line);
+            padding:7px 9px;font-size:14px;font-family:var(--sans);min-width:210px}
+  .controls select:focus-visible,.controls input:focus-visible{outline:2px solid var(--boxline);outline-offset:1px}
+
+  .cols{display:grid;grid-template-columns:360px minmax(0,1fr);gap:26px;align-items:start}
+  @media(max-width:1040px){.cols{grid-template-columns:1fr}}
+
+  .panel{background:var(--chrome);border:1px solid var(--line);padding:16px 18px 18px}
+  .panel h2{font-family:var(--serif);font-weight:400;font-size:21px;margin:0 0 2px}
+  .panel .sub{color:var(--muted);font-size:12px;margin:0 0 12px}
+
+  /* ---- leaderboard ---- */
+  .lb-row{display:grid;grid-template-columns:26px minmax(0,1fr) 54px;gap:9px;align-items:center;
+          padding:5px 2px;border-bottom:1px solid #d0d0d0;font-size:13px}
+  .lb-row:last-child{border-bottom:none}
+  .lb-rank{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;font-size:12px}
+  .lb-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+  .lb-name:hover{text-decoration:underline}
+  .lb-val{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+  .lb-barwrap{grid-column:2/4}
+  .lb-track{background:var(--track);border:1px solid var(--trackline);height:9px;margin-top:3px}
+  .lb-track>i{display:block;height:100%}
+
+  /* ---- player name, echoing the Tableau field ---- */
+  .pname{display:flex;align-items:center;gap:9px;margin-bottom:18px}
+  .pname .box{flex:1;background:var(--chrome);border:1px solid #9a9a9a;padding:7px 13px;
+              font-size:26px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pname .caret{width:34px;height:34px;background:var(--chrome);border:1px solid #9a9a9a;
+                display:flex;align-items:center;justify-content:center;color:#333;font-size:11px}
+
+  /* ---- slider rows ---- */
+  .grp{font-family:var(--serif);font-size:23px;margin:24px 0 13px}
+  .grp:first-of-type{margin-top:4px}
+  .srow{display:grid;grid-template-columns:190px minmax(0,1fr) 84px;gap:13px;
+        align-items:center;margin-bottom:10px}
+  .srow.gen{grid-template-columns:minmax(0,1fr) 84px}
+  .gstack{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .slab{font-size:13px;font-weight:700;text-align:right;line-height:1.3}
+  .srow.gen .slab{text-align:left}
+  .raw{display:block;font-weight:400;font-size:11.5px;color:var(--muted);
+       font-variant-numeric:tabular-nums;margin-top:1px}
+  .strack{background:var(--track);border:1px solid var(--trackline);height:31px;min-width:0}
+  .strack>i{display:block;height:100%}
+  .sval{background:var(--boxbg);border:2px dashed var(--boxline);height:47px;
+        display:flex;align-items:center;justify-content:center;font-size:21px;
+        font-variant-numeric:tabular-nums}
+  .sval.na{color:#9a9a9a;font-size:15px}
+
+  footer{color:var(--muted);font-size:12px;margin-top:24px;line-height:1.65;max-width:100ch}
+  footer a{color:#2c5d8a}
+  .warn{background:#f6d9d9;border:1px solid #c07a7a;color:#6d1f1f;padding:11px 15px;
+        margin-bottom:15px;font-size:13.5px}
+  code{font-family:Consolas,"Courier New",monospace;font-size:.9em;background:#ededed;
+       border:1px solid #cfcfcf;padding:.5px 4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>MSSB <b>Savant</b> Sliders</h1>
+  <p id="meta">Mario Superstar Baseball &mdash; advanced player percentiles</p>
+</header>
+
+<div id="warn"></div>
+
+<div class="controls">
+  <div>
+    <label for="season">Season</label>
+    <select id="season"></select>
+  </div>
+  <div>
+    <label for="metric">Leaderboard metric</label>
+    <select id="metric"></select>
+  </div>
+  <div>
+    <label for="player">Player</label>
+    <select id="player"></select>
+  </div>
+  <div>
+    <label for="q">Filter leaderboard</label>
+    <input id="q" type="text" placeholder="type a username&hellip;" autocomplete="off">
+  </div>
+</div>
+
+<div class="cols">
+  <div class="panel">
+    <h2 id="lb-title">Leaderboard</h2>
+    <p class="sub">Ranked by the selected metric&rsquo;s percentile. Click a name to load it.</p>
+    <div id="lb"></div>
+  </div>
+  <div class="panel">
+    <div class="pname">
+      <div class="box" id="pd-title">Player</div>
+      <div class="caret" aria-hidden="true">&#9660;</div>
+    </div>
+    <div id="pd"></div>
+  </div>
+</div>
+
+<footer>
+  Percentiles are 0&ndash;100 where <b>100 is always best</b> (a 100th-percentile chase rate is
+  the lowest chase rate). Each season is ranked <b>within itself</b>, so a percentile compares a
+  player only to others in that same season &mdash; not across seasons.
+  Metric names follow the original dashboard: note that <b>Bowser HR&nbsp;%</b> and
+  <b>King Boo HR&nbsp;%</b> apply no batter-character filter in the query, so they measure
+  overall HR rate and star-swing HR rate across all characters.
+  Completed seasons are final; the current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
+  Data: Rio netplay database via the
+  <a href="https://github.com/baseball9000/Rio-Sabermetrics">Rio-Sabermetrics</a> queries.
+</footer>
+</div>
+
+<!-- The manifest lists every season; each season's rows live in their own file
+     under data/seasons/ and are loaded on demand. Plain <script> files rather
+     than fetch() so the page also works opened straight from disk. -->
+<script src="data/manifest.js"></script>
+<script>
+"use strict";
+/* Columns are resolved BY NAME from each season's columns, so a change to the
+   query's SELECT list cannot silently misalign the page. */
+const USER_COL = "pitcher_username";
+let IDX = {};
+const METRICS = [
+  {k:"elo",    label:"ELO",              v:"max_elo",                p:"maxelo_percentile",             g:"general",  f:"int"},
+  {k:"games",  label:"Games",            v:"user_gamesplayed",       p:"user_gamesplayed_percentile",   g:"general",  f:"int"},
+  {k:"bBarrel",label:"Barrels",          v:"batter_barrels",         p:"batter_barrel_percentile",      g:"batting",  f:"pct"},
+  {k:"chase",  label:"Chase",            v:"batter_chase",           p:"batter_chase_percentile",       g:"batting",  f:"pct"},
+  {k:"watch",  label:"Watch",            v:"batter_watch",           p:"batter_watch_percentile",       g:"batting",  f:"pct"},
+  {k:"bWhiff", label:"Whiff",            v:"batter_whiff",           p:"batter_whiff_percentile",       g:"batting",  f:"pct"},
+  {k:"ozone",  label:"O-Zone Contact",   v:"batter_ozonecontact",    p:"batter_ozone_contact_percentile",g:"batting", f:"pct"},
+  {k:"bK",     label:"K%",               v:"batter_kpercent",        p:"batterk_percentile",            g:"batting",  f:"pct"},
+  {k:"bBowser",label:"Bowser HR%",       v:"batter_bowserhrpercent", p:"batter_bowserhr_percentile",    g:"batting",  f:"pct"},
+  {k:"charge", label:"Charge Timing",    v:"charge_timing_percent",  p:"charge_timing_percentile",      g:"batting",  f:"pct"},
+  {k:"slap",   label:"Slap Timing",      v:"slap_timing_percent",    p:"slap_timing_percentile",        g:"batting",  f:"pct"},
+  {k:"kbhr",   label:"King Boo HR%",     v:"kbhr_percent",           p:"kbhr_percentile",               g:"batting",  f:"pct"},
+  {k:"pBarrel",label:"Barrels",          v:"pitcher_barrels_given",  p:"pitcher_barrel_percentile",     g:"pitching", f:"pct"},
+  {k:"pWhiff", label:"Whiff",            v:"pitcher_whiff",          p:"pitcher_whiff_percentile",      g:"pitching", f:"pct"},
+  {k:"pK",     label:"K%",               v:"pitcher_kpercent",       p:"pitcher_k_percentile",          g:"pitching", f:"pct"},
+  {k:"pBowser",label:"Bowser HR%",       v:"pitcher_bowserhrpercent",p:"pitcher_bowserhr_percentile",   g:"pitching", f:"pct"},
+];
+/* Slider rows sit under a group heading that already says the side, so they use
+   the short label from the dashboard. The metric menu has no such context, so it
+   spells the side out -- these are DESIGN.md section 3's names. */
+const MENU = {bBarrel:"Barrel % (bat)", bWhiff:"Whiff % (bat)", bK:"K % (bat)",
+  bBowser:"Bowser HR % (bat)", pBarrel:"Barrels Allowed %", pWhiff:"Whiff % (pitch)",
+  pK:"K % (pitch)", pBowser:"Bowser HR % (pitch)", chase:"Chase %", watch:"Watch %",
+  ozone:"O-Zone Contact %", games:"Games Played", kbhr:"King Boo HR %"};
+const GROUPS = [["general",null],["batting","Batting"],["pitching","Pitching"]];
+
+/* Colour marks the GROUP, not the value: green for general, blue for the rest.
+   DESIGN.md describes a blue-to-red value gradient, but the source dashboard
+   uses flat per-group colour -- Charge Timing at 16 is the same blue as Chase
+   at 100. The dashboard wins. */
+const GCOLOR = {general:"var(--green)", batting:"var(--blue)", pitching:"var(--blue)"};
+
+function fmt(m, v){
+  if(v==null) return "—";
+  if(m.f==="int") return Math.round(v).toLocaleString();
+  return (v*100).toFixed(1)+"%";
+}
+function menuLabel(m){ return MENU[m.k] || m.label; }
+/* Usernames come from the database and are rendered on a public page. */
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+let SEASONS = [], rows = [], curSeason = -1;
+
+function init(){
+  const warn = document.getElementById("warn");
+  if(typeof MSSB_MANIFEST === "undefined" || !(MSSB_MANIFEST.seasons||[]).length){
+    warn.innerHTML = `<div class="warn">No season data found. Run
+      <code>python build_seasons.py</code> to generate <code>site/data/</code>.</div>`;
+    return;
+  }
+  SEASONS = MSSB_MANIFEST.seasons;   /* oldest first */
+
+  const ms = document.getElementById("metric");
+  METRICS.forEach(x=>{
+    const o=document.createElement("option"); o.value=x.k; o.textContent=menuLabel(x);
+    ms.appendChild(o);
+  });
+  ms.value="elo";
+
+  const ss = document.getElementById("season");
+  SEASONS.forEach((s,i)=>{
+    const o=document.createElement("option");
+    o.value=String(i);
+    o.textContent = s.name + (s.final ? "" : " (in progress)") + " · " + s.users + " players";
+    ss.appendChild(o);
+  });
+  ss.value = String(SEASONS.length-1);   /* newest season by default */
+
+  ms.onchange = renderLB;
+  document.getElementById("player").onchange = renderPlayer;
+  document.getElementById("q").oninput = renderLB;
+  ss.onchange = ()=>selectSeason(+ss.value);
+
+  selectSeason(SEASONS.length-1);
+}
+
+/* Load a season's file the first time it is picked, then render it. */
+function selectSeason(i){
+  curSeason = i;
+  const s = SEASONS[i];
+  if(window.MSSB_SEASONS && window.MSSB_SEASONS[s.slug]){ loadSeason(i); return; }
+  document.getElementById("warn").innerHTML = "";
+  document.getElementById("lb").innerHTML = `<p class="sub">Loading ${esc(s.name)}&hellip;</p>`;
+  document.getElementById("pd").innerHTML = "";
+  const tag = document.createElement("script");
+  /* built_at changes whenever the file is rebuilt, so browsers never show a
+     stale copy of the current season. */
+  const bust = location.protocol === "file:" ? "" : "?v=" + encodeURIComponent(s.built_at || "");
+  tag.src = "data/" + s.file + bust;
+  tag.onload = ()=>{ if(curSeason===i) loadSeason(i); };
+  tag.onerror = ()=>{
+    if(curSeason!==i) return;
+    document.getElementById("lb").innerHTML = "";
+    document.getElementById("warn").innerHTML =
+      `<div class="warn">Could not load <code>data/${esc(s.file)}</code>.</div>`;
+  };
+  document.head.appendChild(tag);
+}
+
+/* Percentiles are computed WITHIN each season by the SQL, so switching season
+   swaps the whole comparison pool -- never mix rows across seasons. */
+function loadSeason(i){
+  const warn = document.getElementById("warn");
+  const s = SEASONS[i];
+  const d = (window.MSSB_SEASONS||{})[s.slug];
+  IDX = {};
+  rows = [];
+  if(!d){
+    warn.innerHTML = `<div class="warn"><code>data/${esc(s.file)}</code> loaded but did
+      not contain ${esc(s.name)}. Re-run <code>build_seasons.py</code>.</div>`;
+  } else {
+    (d.columns||[]).forEach((c,n)=>{ if(!(c in IDX)) IDX[c]=n; });
+    const need = [USER_COL].concat(...METRICS.map(m=>[m.v,m.p]));
+    const missing = need.filter(n=>!(n in IDX));
+    if(missing.length){
+      warn.innerHTML = `<div class="warn"><b>${esc(s.name)}: missing ${missing.length}
+        expected column(s):</b> ${esc(missing.join(", "))}.<br>Re-run
+        <code>build_seasons.py</code>; if that doesn't fix it, the SQL and
+        this page have diverged.</div>`;
+    } else {
+      warn.innerHTML = "";
+      rows = d.rows.map(r=>({name:r[IDX[USER_COL]], r}));
+    }
+  }
+
+  const updated = s.built_at
+    ? new Date(s.built_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"}) : "?";
+  document.getElementById("meta").innerHTML =
+    `Mario Superstar Baseball &mdash; advanced player percentiles` +
+    `<br><b>${esc(s.name)}</b>` +
+    (s.final ? `<span class="badge">FINAL</span>` : `<span class="badge live">IN PROGRESS</span>`) +
+    ` &middot; ${esc(s.start)} to ${esc(s.end)}` +
+    ` &middot; ${rows.length} qualified players` +
+    ` &middot; updated ${esc(updated)}`;
+
+  const ps = document.getElementById("player");
+  ps.innerHTML = "";
+  [...rows].sort((a,b)=>a.name.localeCompare(b.name)).forEach(x=>{
+    const o=document.createElement("option"); o.value=x.name; o.textContent=x.name;
+    ps.appendChild(o);
+  });
+  if(rows.length) ps.value = rows[0].name;
+
+  renderLB(); renderPlayer();
+}
+
+function val(row, m){ return row.r[IDX[m.v]]; }
+function pct(row, m){ const p=row.r[IDX[m.p]]; return p==null?null:+p; }
+
+function renderLB(){
+  const mk = document.getElementById("metric").value;
+  const m = METRICS.find(x=>x.k===mk);
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  document.getElementById("lb-title").textContent = "Leaderboard — " + menuLabel(m);
+  const colr = GCOLOR[m.g];
+  let list = rows.filter(r=>!q || r.name.toLowerCase().includes(q));
+  list = [...list].sort((a,b)=>{
+    const pa=pct(a,m), pb=pct(b,m);
+    if(pa==null && pb==null) return 0;
+    if(pa==null) return 1;            /* null percentiles sort last */
+    if(pb==null) return -1;
+    return pb-pa;
+  });
+  const el = document.getElementById("lb");
+  const empty = rows.length
+    ? `<p class="sub">No players match.</p>`
+    : `<p class="sub">No qualified players yet. Players appear once they clear the
+       qualification floors, usually a few days into a new season.</p>`;
+  el.innerHTML = list.map((r,i)=>{
+    const p=pct(r,m);
+    return `<div class="lb-row">
+      <div class="lb-rank">${i+1}</div>
+      <div class="lb-name" data-u="${esc(r.name)}">${esc(r.name)}</div>
+      <div class="lb-val">${fmt(m,val(r,m))}</div>
+      <div class="lb-barwrap"><div class="lb-track"><i style="width:${p==null?0:p}%;background:${colr}"></i></div></div>
+    </div>`;
+  }).join("") || empty;
+  el.querySelectorAll(".lb-name").forEach(n=>{
+    n.onclick = ()=>{ document.getElementById("player").value=n.dataset.u; renderPlayer(); };
+  });
+}
+
+function renderPlayer(){
+  const name = document.getElementById("player").value;
+  const row = rows.find(r=>r.name===name);
+  document.getElementById("pd-title").textContent = name || "Player";
+  const el = document.getElementById("pd");
+  if(!row){ el.innerHTML=""; return; }
+  el.innerHTML = GROUPS.map(([gk,gl])=>{
+    const bars = METRICS.filter(m=>m.g===gk).map(m=>{
+      const v=val(row,m), p=pct(row,m), colr=GCOLOR[gk];
+      const track = `<div class="strack"><i style="width:${p==null?0:p}%;background:${colr}"></i></div>`;
+      const lab = `<div class="slab">${m.label}<span class="raw">${fmt(m,v)}</span></div>`;
+      const box = p==null
+        ? `<div class="sval na" title="below this metric's qualification floor">n/a</div>`
+        : `<div class="sval" title="${p.toFixed(1)}th percentile">${Math.round(p)}</div>`;
+      return gk==="general"
+        ? `<div class="srow gen"><div class="gstack">${lab}${track}</div>${box}</div>`
+        : `<div class="srow">${lab}${track}${box}</div>`;
+    }).join("");
+    return (gl?`<div class="grp">${gl}</div>`:"") + bars;
+  }).join("");
+}
+init();
+</script>
+</body>
+</html>

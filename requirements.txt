@@ -1,0 +1,2 @@
+psycopg[binary]>=3.1
+tzdata  # Eastern-time handling on Windows; Linux runners already have it

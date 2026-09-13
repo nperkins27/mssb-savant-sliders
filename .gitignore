@@ -1,0 +1,5 @@
+# Production database credentials. Never commit; CI uses repository secrets.
+DATABASE_CONNECTION.md
+
+__pycache__/
+*.tmp
