@@ -4,6 +4,9 @@
 Copied mechanically: the SQL text is unchanged except that SQLAlchemy's
 :name bind parameters are written as psycopg's %(name)s. Keep it in step with
 upstream; season_metrics.py documents the definitions.
+
+NOTE: includes the special-catches column and RUNS_SQL for the three per-9
+metrics, which are not pushed to the PR yet.
 """
 
 # S9 Superstars Off is typed 'League' rather than 'Season', so it cannot be
@@ -45,16 +48,23 @@ PITCHING_ORDER = (
     'pitch_whiff_pct',
     'pitch_k_pct',
     'pitch_hr_allowed_pct',
+    'pitch_special_catches_per_9',
 )
 
 # One pass over the season's events, producing every numerator and denominator
-# for both roles. Batting fills all eight pairs; pitching fills four and pads
-# the rest with NULL so the two halves can be UNIONed.
+# for both roles. Batting fills all eight pairs; pitching fills five and pads
+# the rest with NULL so the two halves can be UNIONed. The fifth pitching pair
+# is special catches, whose denominator (outs recorded on defense) is NULL here
+# and filled in from cRUNS_SQL, the same outs the runs-against rate uses.
 #
 # Enum values: result_of_ab 1 strikeout / 2 walk / 3 HBP / 10 HR (1-16 is the
-# decodable range, so "not none" is `BETWEEN 1 AND 16`). type_of_swing 1 slap,
-# 2 charge. type_of_contact 1/2/3 are the barrel values out of 0-4.
-# input_direction_stick 4/5/6 are down, down-left, down-right.
+# decodable range, so "not none" is `BETWEEN 1 AND 16`); 5 caught, 6 caught
+# line drive, 14 sac fly and 16 foul catch are the outs made by catching the
+# ball. type_of_swing 1 slap, 2 charge. type_of_contact 1/2/3 are the barrel
+# values out of 0-4. input_direction_stick 4/5/6 are down, down-left,
+# down-right. fielding_summary.action 2 is a sliding (diving) play and 3 a
+# wall jump; jump = 1 is a jump. A special catch is a catch made with any of
+# the three.
 AGGREGATE_SQL = '''
 WITH sg AS (
     SELECT DISTINCT gh.game_id
@@ -73,12 +83,15 @@ ev AS MATERIALIZED (
         ps.contact_summary_id,
         cs.type_of_contact,
         cs.frame_of_swing_upon_contact AS frame,
-        cs.input_direction_stick AS stick
+        cs.input_direction_stick AS stick,
+        fs.action AS field_action,
+        fs.jump AS field_jump
     FROM sg
     JOIN game g ON g.game_id = sg.game_id
     JOIN event e ON e.game_id = sg.game_id
     LEFT JOIN pitch_summary ps ON ps.id = e.pitch_summary_id
     LEFT JOIN contact_summary cs ON cs.id = ps.contact_summary_id
+    LEFT JOIN fielding_summary fs ON fs.id = cs.fielding_summary_id
     LEFT JOIN character_game_summary bcgs ON bcgs.id = e.batter_id
     LEFT JOIN character ch ON ch.char_id = bcgs.char_id
 )
@@ -120,7 +133,10 @@ SELECT 'pitch', pitcher_user,
     COUNT(*) FILTER (WHERE result_of_ab = 10 AND batter_char = ANY(%(power_chars)s))                    AS n4,
     COUNT(*) FILTER (WHERE result_of_ab BETWEEN 1 AND 16 AND result_of_ab NOT IN (2,3)
                        AND batter_char = ANY(%(power_chars)s))                                          AS d4,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    COUNT(*) FILTER (WHERE result_of_ab IN (5,6,14,16)
+                       AND (field_action IN (2,3) OR field_jump = 1))                                AS n5,
+    NULL AS d5,
+    NULL, NULL, NULL, NULL, NULL, NULL
 FROM ev
 WHERE pitcher_user IS NOT NULL
 GROUP BY pitcher_user
@@ -171,4 +187,36 @@ latest AS (
 )
 SELECT a.user_id, a.wins, a.games, l.result_elo
 FROM agg a JOIN latest l ON l.user_id = a.user_id
+'''
+
+# Runs and outs for the per-9 metrics, from the per-character game summaries.
+# A team's summed runs_allowed is the runs its opponent scored (it matches the
+# opponent's final score in 99.3% of S14 team-games), and its summed
+# outs_pitched is the outs it recorded on defense. So for each player:
+#   runs against / 9 = 27 * own runs_allowed      / own outs_pitched
+#   runs / 9         = 27 * opponent runs_allowed / opponent outs_pitched
+RUNS_SQL = '''
+WITH sg AS (
+    SELECT DISTINCT gh.game_id
+    FROM game_history gh
+    WHERE gh.tag_set_id = %(tag_set_id)s
+      AND gh.game_id IS NOT NULL
+),
+team AS (
+    SELECT c.game_id, c.team_id, c.user_id,
+           SUM(c.runs_allowed) AS runs_allowed,
+           SUM(c.outs_pitched) AS outs
+    FROM sg
+    JOIN character_game_summary c ON c.game_id = sg.game_id
+    GROUP BY c.game_id, c.team_id, c.user_id
+)
+SELECT own.user_id,
+       SUM(opp.runs_allowed) AS runs_scored,
+       SUM(opp.outs)         AS outs_batting,
+       SUM(own.runs_allowed) AS runs_allowed,
+       SUM(own.outs)         AS outs_fielding
+FROM team own
+JOIN team opp ON opp.game_id = own.game_id AND opp.team_id <> own.team_id
+WHERE own.user_id IS NOT NULL
+GROUP BY own.user_id
 '''

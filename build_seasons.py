@@ -190,7 +190,7 @@ def discover(conn) -> list[dict]:
 
 def collect(conn, tag_set_id: int) -> dict:
     """Everything season_metrics.build_rows() needs for one season. The same
-    three queries as Rio's season_metrics_db.collect(), on one connection."""
+    four queries as Rio's season_metrics_db.collect(), on one connection."""
     per_user = {}
 
     def record(user_id):
@@ -220,12 +220,23 @@ def collect(conn, tag_set_id: int) -> dict:
             counts = record(user_id)["counts"]
             for i, metric in enumerate(order):
                 counts[metric] = (row[2 + i * 2], row[3 + i * 2])
+
+        # After the aggregate: special catches take their denominator from here.
+        cur.execute(q.RUNS_SQL, {"tag_set_id": tag_set_id})
+        for user_id, *sums in cur.fetchall():
+            # SUM() arrives as Decimal; the counts are whole numbers.
+            runs_scored, outs_batting, runs_allowed, outs_fielding = (int(s or 0) for s in sums)
+            counts = record(user_id)["counts"]
+            counts["gen_runs_per_9"] = (runs_scored, outs_batting)
+            counts["gen_runs_against_per_9"] = (runs_allowed, outs_fielding)
+            special = counts.get("pitch_special_catches_per_9", (0, None))[0] or 0
+            counts["pitch_special_catches_per_9"] = (special, outs_fielding)
     return per_user
 
 
 def season_payload(conn, per_user: dict) -> tuple[dict, int]:
     """build_rows() output reshaped for the page: one entry per player holding
-    all fourteen metrics. Returns (payload, players who met the games floor)."""
+    every metric. Returns (payload, players who met the games floor)."""
     slot = {m: i for i, m in enumerate(sm.cSEASON_METRICS)}
     by_user = {uid: [None] * len(slot) for uid in per_user}
     for r in sm.build_rows(per_user):

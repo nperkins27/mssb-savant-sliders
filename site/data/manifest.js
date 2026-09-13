@@ -10,9 +10,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 72,
    "qualified": 18,
-   "built_at": "2026-09-13T00:59:18+00:00",
+   "built_at": "2026-09-13T03:00:19+00:00",
    "file": "seasons/starsoffseason4.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "starsoffseason5",
@@ -23,9 +23,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 222,
    "qualified": 79,
-   "built_at": "2026-09-13T01:00:24+00:00",
+   "built_at": "2026-09-13T03:01:29+00:00",
    "file": "seasons/starsoffseason5.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "starsoffseason6",
@@ -36,9 +36,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 182,
    "qualified": 68,
-   "built_at": "2026-09-13T01:01:26+00:00",
+   "built_at": "2026-09-13T03:02:44+00:00",
    "file": "seasons/starsoffseason6.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "starsoffseason7",
@@ -49,9 +49,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 199,
    "qualified": 65,
-   "built_at": "2026-09-13T00:58:57+00:00",
+   "built_at": "2026-09-13T03:03:44+00:00",
    "file": "seasons/starsoffseason7.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "starsoffseason8",
@@ -62,9 +62,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 294,
    "qualified": 106,
-   "built_at": "2026-09-13T01:02:23+00:00",
+   "built_at": "2026-09-13T03:04:50+00:00",
    "file": "seasons/starsoffseason8.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "s9superstarsoff",
@@ -75,9 +75,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 357,
    "qualified": 125,
-   "built_at": "2026-09-13T01:03:19+00:00",
+   "built_at": "2026-09-13T03:06:07+00:00",
    "file": "seasons/s9superstarsoff.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "s10superstarsoff",
@@ -88,9 +88,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 216,
    "qualified": 95,
-   "built_at": "2026-09-13T01:04:02+00:00",
+   "built_at": "2026-09-13T03:07:19+00:00",
    "file": "seasons/s10superstarsoff.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "s11superstarsoff",
@@ -101,9 +101,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 341,
    "qualified": 112,
-   "built_at": "2026-09-13T01:04:44+00:00",
+   "built_at": "2026-09-13T03:08:28+00:00",
    "file": "seasons/s11superstarsoff.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "s12superstarsoff",
@@ -114,9 +114,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 393,
    "qualified": 124,
-   "built_at": "2026-09-13T01:05:48+00:00",
+   "built_at": "2026-09-13T03:09:37+00:00",
    "file": "seasons/s12superstarsoff.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "interimsuperstarsoff",
@@ -127,9 +127,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 76,
    "qualified": 25,
-   "built_at": "2026-09-13T01:05:53+00:00",
+   "built_at": "2026-09-13T03:09:43+00:00",
    "file": "seasons/interimsuperstarsoff.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "s13superstarsoff",
@@ -140,9 +140,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 193,
    "qualified": 56,
-   "built_at": "2026-09-13T01:06:16+00:00",
+   "built_at": "2026-09-13T03:11:37+00:00",
    "file": "seasons/s13superstarsoff.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "s14superstarsoff",
@@ -153,9 +153,9 @@ window.MSSB_MANIFEST = {
    "final": true,
    "players": 274,
    "qualified": 98,
-   "built_at": "2026-09-13T01:06:35+00:00",
+   "built_at": "2026-09-13T02:59:27+00:00",
    "file": "seasons/s14superstarsoff.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   },
   {
    "slug": "s15superstarsoff",
@@ -166,13 +166,13 @@ window.MSSB_MANIFEST = {
    "final": false,
    "players": 95,
    "qualified": 24,
-   "built_at": "2026-09-13T01:58:49+00:00",
+   "built_at": "2026-09-13T03:12:28+00:00",
    "file": "seasons/s15superstarsoff.js",
-   "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   }
  ],
- "updated_at": "2026-09-13T01:58:49+00:00",
- "checked_at": "2026-09-13T01:58:49+00:00",
+ "updated_at": "2026-09-13T03:12:28+00:00",
+ "checked_at": "2026-09-13T03:12:29+00:00",
  "metric_rules": {
   "bat_barrel_pct": [
    true,
@@ -234,6 +234,11 @@ window.MSSB_MANIFEST = {
    10,
    50
   ],
+  "pitch_special_catches_per_9": [
+   true,
+   10,
+   null
+  ],
   "gen_adjusted_elo": [
    true,
    10,
@@ -241,6 +246,16 @@ window.MSSB_MANIFEST = {
   ],
   "gen_games_played": [
    true,
+   10,
+   null
+  ],
+  "gen_runs_per_9": [
+   true,
+   10,
+   null
+  ],
+  "gen_runs_against_per_9": [
+   false,
    10,
    null
   ]

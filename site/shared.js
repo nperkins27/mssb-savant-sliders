@@ -7,10 +7,13 @@ window.MSSB = (() => {
 
 /* Keys are Rio's season_metric names. Pages look metrics up BY NAME in each
    season file, so a change in the data's order cannot misalign them.
-   n / d name the numerator and denominator shown under a rate. */
+   n / d name the numerator and denominator shown under a rate. Per-9 metrics
+   ("per9") have outs as their denominator, shown as innings. */
 const METRICS = [
   {k:"gen_adjusted_elo",          label:"ELO",                 g:"general",  f:"int"},
   {k:"gen_games_played",          label:"Games Played",        g:"general",  f:"int"},
+  {k:"gen_runs_per_9",            label:"Runs/9",              g:"general",  f:"per9",                         n:"runs scored"},
+  {k:"gen_runs_against_per_9",    label:"Runs Against/9",      g:"general",  f:"per9",                         n:"runs allowed"},
   {k:"bat_barrel_pct",            label:"Barrel %",            g:"batting",  f:"pct", menu:"Barrel % (bat)",  n:"barrels",           d:"contacts"},
   {k:"bat_chase_pct",             label:"Chase %",             g:"batting",  f:"pct",                          n:"chases",            d:"out-of-zone pitches"},
   {k:"bat_whiff_pct",             label:"Whiff %",             g:"batting",  f:"pct", menu:"Whiff % (bat)",   n:"whiffs",            d:"swings"},
@@ -23,15 +26,21 @@ const METRICS = [
   {k:"pitch_whiff_pct",           label:"Whiff %",             g:"pitching", f:"pct", menu:"Whiff % (pitch)", n:"whiffs",            d:"swings induced"},
   {k:"pitch_k_pct",               label:"K %",                 g:"pitching", f:"pct", menu:"K % (pitch)",     n:"strikeouts",        d:"batters faced"},
   {k:"pitch_hr_allowed_pct",      label:"HR % Allowed",        g:"pitching", f:"pct",                          n:"home runs",         d:"at-bats vs power hitters"},
+  {k:"pitch_special_catches_per_9", label:"Special Catches/9", g:"pitching", f:"per9",                         n:"special catches"},
 ];
 
 /* ==========================================================================
    METRIC DEFINITIONS -- the text shown in the "Metric definitions" dialog.
    Edit freely. Say what the metric measures only: the dialog adds "Higher /
    Lower is better" and any extra qualification floor itself, from the same
-   rules the build uses, so those can never drift from the data.
+   rules the build uses, so those can never drift from the data. Only metrics
+   with an entry here appear in the dialog (ELO and Games Played have none).
    ========================================================================== */
 const DEFINITIONS = {
+  gen_runs_per_9:
+    "Runs the player's team scores per 9 innings at bat (every 27 outs made).",
+  gen_runs_against_per_9:
+    "Runs the player's team allows per 9 innings in the field (every 27 outs recorded on defense).",
   bat_barrel_pct:
     "Share of the batter's contacts that are nice or perfect (nice-left, perfect, nice-right) rather than sour.",
   bat_chase_pct:
@@ -60,9 +69,12 @@ const DEFINITIONS = {
   pitch_hr_allowed_pct:
     "Home runs allowed per at-bat against the power hitters (Bowser, Petey, DK, King Boo, Wario and the " +
     "Bro and Pianta variants), not counting walks or hit-by-pitches.",
+  pitch_special_catches_per_9:
+    "Catches that record an out and are made with a dive, a wall jump or a jump, per 9 innings in the field. " +
+    "Includes sac flies and foul catches.",
 };
 
-const GROUPS = [["general",null],["batting","Batting"],["pitching","Pitching"]];
+const GROUPS = [["general",null],["batting","Batting"],["pitching","Pitching/Fielding"]];
 
 /* Colour marks the GROUP, not the value: green for general, blue for the rest,
    as on the source dashboard. */
@@ -78,7 +90,18 @@ const GAMES = METRICS.find(m=>m.k==="gen_games_played");
 function fmt(m, v){
   if(v==null) return "—";
   if(m.f==="int") return Math.round(v).toLocaleString();
+  if(m.f==="per9") return v.toFixed(2);
   return (v*100).toFixed(1)+"%";
+}
+/* Outs as innings in baseball notation: 136 outs is 45.1 (45 and one third). */
+function innings(outs){ return Math.floor(outs/3) + (outs % 3 ? "." + (outs % 3) : ""); }
+/* The counts behind a rate, for the line under its label and its tooltip.
+   null for metrics with no counts (ELO, games played). */
+function counts(m, c){
+  if(!c || c.den==null) return null;
+  return m.f==="per9"
+    ? {text:`${c.num} in ${innings(c.den)} inn`, title:`${c.num} ${m.n} in ${innings(c.den)} innings (${c.den} outs)`}
+    : {text:`${c.num}/${c.den}`, title:`${c.num} ${m.n} of ${c.den} ${m.d}`};
 }
 function menuLabel(m){ return m.menu || m.label; }
 /* Usernames come from the database and are rendered on a public page. */
@@ -152,13 +175,19 @@ function loadSeason(slug){
 /* ---- metric definitions dialog ---- */
 function definitionsHTML(){
   const minGames = (rules.bat_barrel_pct || [])[1] ?? 10;
-  const section = (g, title)=> `<h3>${title}</h3><dl>` + METRICS.filter(m=>m.g===g).map(m=>{
-    const r = rules[m.k] || [];
-    const rule = (r[0] === false ? "Lower is better." : "Higher is better.") +
-      (r[2]!=null ? ` Also needs ${r[2]} ${esc(m.d)} to qualify.` : "");
-    return `<dt>${esc(m.label)}</dt>
-      <dd>${esc(DEFINITIONS[m.k] || "")}<span class="defs-rule">${rule}</span></dd>`;
-  }).join("") + `</dl>`;
+  /* One section per group, in page order, listing the metrics that have a
+     definition. General's heading is blank on the pages, so it is named here. */
+  const sections = GROUPS.map(([g, title])=>{
+    const defined = METRICS.filter(m=>m.g===g && DEFINITIONS[m.k]);
+    if(!defined.length) return "";
+    return `<h3>${esc(title || "General")}</h3><dl>` + defined.map(m=>{
+      const r = rules[m.k] || [];
+      const rule = (r[0] === false ? "Lower is better." : "Higher is better.") +
+        (r[2]!=null ? ` Also needs ${r[2]} ${esc(m.d)} to qualify.` : "");
+      return `<dt>${esc(m.label)}</dt>
+        <dd>${esc(DEFINITIONS[m.k])}<span class="defs-rule">${rule}</span></dd>`;
+    }).join("") + `</dl>`;
+  }).join("");
   return `<div class="defs-inner">
     <div class="defs-head">
       <h2 id="defs-title">Metric definitions</h2>
@@ -166,8 +195,7 @@ function definitionsHTML(){
     </div>
     <p class="defs-note">Every metric needs ${minGames} games in the season to qualify.
       Percentiles rank a player against others in the same season, and 100 is always best.</p>
-    ${section("batting", "Batting")}
-    ${section("pitching", "Pitching")}
+    ${sections}
   </div>`;
 }
 function openDefinitions(){
@@ -210,5 +238,5 @@ function setupThemeToggle(){
 setupThemeToggle();
 
 return {METRICS, GROUPS, GCOLOR, DEFINITIONS, seasons, bySlug, rules,
-        fmt, menuLabel, esc, badge, updatedLabel, whyNot, loadSeason, openDefinitions};
+        fmt, counts, menuLabel, esc, badge, updatedLabel, whyNot, loadSeason, openDefinitions};
 })();

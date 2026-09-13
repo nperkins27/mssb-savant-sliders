@@ -1,6 +1,8 @@
 # Vendored VERBATIM from ProjectRio-web app/season_metrics.py
 # (https://github.com/ProjectRio/ProjectRio-web/pull/154), so this site computes exactly what Rio's season_metric
 # table holds. Do not edit it here: change it upstream, then copy it back.
+# NOTE: includes gen_runs_per_9, gen_runs_against_per_9 and
+# pitch_special_catches_per_9, which are not pushed to the PR yet.
 '''Computation of per-season advanced percentiles (the "Savant Sliders" set).
 
 Split deliberately into two halves:
@@ -37,8 +39,11 @@ cSEASON_METRICS = (
     'pitch_whiff_pct',
     'pitch_k_pct',
     'pitch_hr_allowed_pct',
+    'pitch_special_catches_per_9',
     'gen_adjusted_elo',
     'gen_games_played',
+    'gen_runs_per_9',
+    'gen_runs_against_per_9',
 )
 
 
@@ -78,9 +83,22 @@ cMETRIC_RULES = {
     # runs allowed rank first and second on a 65-player board. Set to None to
     # stay purely on the games rule.
     'pitch_hr_allowed_pct':      (False, cMIN_GAMES, 50),
+    'pitch_special_catches_per_9': (True, cMIN_GAMES, None),
     'gen_adjusted_elo':          (True,  cMIN_GAMES, None),
     'gen_games_played':          (True,  cMIN_GAMES, None),
+    'gen_runs_per_9':            (True,  cMIN_GAMES, None),
+    'gen_runs_against_per_9':    (False, cMIN_GAMES, None),
 }
+
+# Metrics reported per 9 innings rather than as a plain ratio. Their
+# denominator is outs (27 to a 9-inning game), so value = 27 * numerator /
+# denominator. Every other rate is numerator / denominator.
+cPER_9_METRICS = frozenset((
+    'pitch_special_catches_per_9',
+    'gen_runs_per_9',
+    'gen_runs_against_per_9',
+))
+cOUTS_PER_9 = 27
 
 # Adjusted ELO constants, from the community's existing implementation.
 cELO_BETA = 0.85
@@ -160,7 +178,7 @@ def build_rows(per_user):
         'elo_rating': int or None,    # result ELO on the most recent rated game
         'elo_wins':   int,
         'elo_games':  int,            # rated games, i.e. game_history rows
-        'counts':     {metric: (numerator, denominator)},
+        'counts':     {metric: (numerator, denominator)},  # outs for per-9 metrics
     }
 
     Percentiles are ranked only over players who qualify for that metric, so a
@@ -186,7 +204,8 @@ def build_rows(per_user):
                 value = adjusted_elo(rec['elo_rating'], rec['elo_wins'], rec['elo_games'])
             else:
                 numerator, denominator = rec['counts'].get(metric, (0, 0))
-                value = (numerator / denominator) if denominator else None
+                scale = cOUTS_PER_9 if metric in cPER_9_METRICS else 1
+                value = (scale * numerator / denominator) if denominator else None
 
             ok = value is not None and qualifies(metric, rec['games'], denominator)
             staged.append({

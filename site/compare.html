@@ -232,9 +232,10 @@ function renderCard(el){
 
 function rowHTML(season, p, m, games){
   const c = season.cell(p, m) || {};
-  const counts = c.den != null ? ` · ${c.num}/${c.den}` : "";
+  const n = MSSB.counts(m, c);
+  const counts = n ? ` · ${n.text}` : "";
   const why = c.ok ? "" : whyNot(m, c, games);
-  const tip = c.den != null ? `${c.num} ${m.n} of ${c.den} ${m.d}` : `${m.label}: ${fmt(m, c.value)}`;
+  const tip = n ? n.title : `${m.label}: ${fmt(m, c.value)}`;
   const box = c.ok
     ? `<div class="sval" title="${c.pct.toFixed(1)}th percentile of ${c.pool} players in ${esc(season.entry.name)}">${Math.round(c.pct)}</div>`
     : `<div class="sval na" title="${esc(why)}">n/a</div>`;

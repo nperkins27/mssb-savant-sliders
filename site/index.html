@@ -230,8 +230,8 @@ function renderPlayer(){
   el.innerHTML = GROUPS.map(([gk,gl])=>{
     const bars = METRICS.filter(m=>m.g===gk).map(m=>{
       const c = S.cell(p,m) || {}, colr = GCOLOR[gk];
-      const counts = c.den!=null
-        ? ` <span title="${c.num} ${esc(m.n)} of ${c.den} ${esc(m.d)}">&middot; ${c.num}/${c.den}</span>` : "";
+      const n = MSSB.counts(m, c);
+      const counts = n ? ` <span title="${esc(n.title)}">&middot; ${esc(n.text)}</span>` : "";
       const why = c.ok ? "" : `<span class="why">${esc(whyNot(m, c, games))}</span>`;
       const track = `<div class="strack"><i style="width:${c.ok?c.pct:0}%;background:${colr}"></i></div>`;
       const lab = `<div class="slab">${m.label}<span class="raw">${fmt(m,c.value)}${counts}</span>${why}</div>`;
