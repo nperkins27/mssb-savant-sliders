@@ -39,14 +39,22 @@ Each season file stores, for every player and metric, the same columns as a
 whether the player qualified. Players who played at least one game are included,
 qualified or not, so anyone can look themselves up.
 
-### Tournaments: Netplay Superstars and SLICE
+### Tournaments: Netplay Superstars, SLICE, Bobble and MBA Champions League
 
-Tournaments are tag sets typed Tournament named "Netplay Superstars NN" or
-"NPSSNN", or the official SLICE stars-off event each year ("SLICE 2023, Stars
-Off", "SLICE 2024 Superstars Off" onward; Practice and Friendly SLICE modes are
-excluded). They are listed alongside the seasons, with the same 17
-metrics but **no qualification minimums**: every player who played at least one
-game is ranked on every metric they have data for. This is a site choice; Rio's
+Tournaments are stars-off tag sets matched by name:
+
+- **Netplay Superstars**: "Netplay Superstars NN" or "NPSSNN" (typed Tournament).
+- **SLICE**: the official stars-off event each year ("SLICE 2023, Stars Off",
+  "SLICE 2024 Superstars Off" onward; typed Tournament). Practice and Friendly
+  SLICE modes are excluded.
+- **Bobble**: "Bobble: Stars-Off (Bracket)" (2025) and "Bobble YYYY" (2026 on;
+  typed Tournament). Big Balla and non-bracket modes are excluded.
+- **MBA Champions League**: "MBA Champions League YYYY". Matched by name alone,
+  since Rio types 2024 as League and 2025 as Season.
+
+Every one must also carry the Disable Superstars tag. They are listed alongside
+the seasons, with the same 18 metrics but **no qualification minimums**: every
+player who played at least one game is ranked on every metric they have data for. This is a site choice; Rio's
 `season_metric` table covers seasons only. `build_seasons.py` ranks them with
 Rio's own `build_rows()`, switching the floors off only while a tournament is
 built, and the pages say "no minimums" wherever a tournament is shown.

@@ -9,11 +9,13 @@ Run it any time -- it only does the work that is still due.
     matches what the season_metric table holds.
   * Seasons are discovered with Rio's own rule: main-line Stars Off tag sets
     from Season 4 on, plus S9, which is typed League.
-  * Tournaments -- Netplay Superstars ("Netplay Superstars 28", "NPSS17") and
-    the official SLICE stars-off events ("SLICE 2023, Stars Off", "SLICE 2026
-    Superstars Off") -- are built the same way but with NO qualification
-    floors: every player who played is ranked on every metric they have data
-    for. This is a site choice; Rio's season_metric table covers seasons only.
+  * Tournaments -- Netplay Superstars ("Netplay Superstars 28", "NPSS17"), the
+    official SLICE stars-off events ("SLICE 2023, Stars Off", "SLICE 2026
+    Superstars Off"), Bobble ("Bobble: Stars-Off (Bracket)", "Bobble 2026")
+    and MBA Champions League ("MBA Champions League 2024") -- are built the
+    same way but with NO qualification floors: every player who played is
+    ranked on every metric they have data for. This is a site choice; Rio's
+    season_metric table covers seasons only.
   * A season that has started and is not final gets rebuilt. It becomes final
     on the first build that runs more than GRACE_DAYS after its end_date, and
     is never queried again after that.
@@ -76,16 +78,28 @@ where id in (""" + q.SEASON_DISCOVERY_SQL + """)
 #   SLICE: the official stars-off event each year -- "SLICE 2023, Stars Off", then
 #          "SLICE 2024 Superstars Off" onward. Superstars On, Big Balla and Randoms
 #          are other modes.
+#   Bobble: "Bobble: Stars-Off (Bracket)" in 2025 (Big Balla and the non-bracket
+#           modes are excluded), then "Bobble 2026".
+#   MBA Champions League: a months-long league, typed League in 2024 and Season
+#           in 2025, so it is matched by name alone rather than by type.
 # Anchored at both ends so "Practice: SLICE ..." and "Friendly: SLICE ..." (and
-# any other variant) never match.
+# any other variant) never match. Every one must also carry the Disable
+# Superstars tag, so a stars-on event that happens to share a name never does.
 TOURNAMENTS_SQL = """
 select id, name, name_lowercase, start_date, end_date, 'tournament' as kind,
-       case when name_lowercase ~ '^slice' then 'slice' else 'npss' end as series
-from tag_set
-where type = 'Tournament'
-  and (name_lowercase ~ '^netplaysuperstars[0-9]+$'
-       or name_lowercase ~ '^npss[0-9]+$'
-       or name_lowercase ~ '^slice[0-9]{4}(superstars|stars)off$')
+       case when name_lowercase ~ '^slice' then 'slice'
+            when name_lowercase ~ '^bobble' then 'bobble'
+            when name_lowercase ~ '^mbachampionsleague' then 'mba'
+            else 'npss' end as series
+from tag_set ts
+where exists (select 1 from tag_set_tag tst where tst.tagset_id = ts.id and tst.tag_id = %(tag)s)
+  and ((type = 'Tournament'
+        and (name_lowercase ~ '^netplaysuperstars[0-9]+$'
+             or name_lowercase ~ '^npss[0-9]+$'
+             or name_lowercase ~ '^slice[0-9]{4}(superstars|stars)off$'
+             or name_lowercase ~ '^bobble[0-9]{4}$'
+             or name_lowercase ~ '^bobble([0-9]{4})?starsoffbracket$'))
+       or name_lowercase ~ '^mbachampionsleague[0-9]{4}$')
 """
 
 # Part of a tournament's fingerprint, so changing how tournaments are ranked
@@ -211,7 +225,7 @@ def discover(conn) -> list[dict]:
     found = []
     with conn.cursor() as cur:
         for sql, params in ((SEASONS_SQL, {"exceptions": list(q.SEASON_ID_EXCEPTIONS)}),
-                            (TOURNAMENTS_SQL, None)):
+                            (TOURNAMENTS_SQL, {"tag": DISABLE_SUPERSTARS_TAG})):
             cur.execute(sql, params)
             names = [d[0] for d in cur.description]
             found += [dict(zip(names, r)) for r in cur.fetchall()]
@@ -398,7 +412,9 @@ def plan_season(s: dict, prev: dict | None, fingerprint: str, now: float,
     return "build", "final build" if ends_final else "in progress"
 
 
-def season_gap_alert(conn, seasons: list[dict], now: float) -> str:
+def season_gap_alert(conn, seasons: list[dict], now: float, known_ids: list[int]) -> str:
+    """known_ids: every discovered tag set, tournaments included, so a league
+    typed Season (MBA Champions League 2025) isn't listed as a missed season."""
     grace = GRACE_DAYS * 86400
     if any(s["start_date"] <= now <= s["end_date"] + grace for s in seasons):
         return ""   # a season is running
@@ -412,7 +428,7 @@ def season_gap_alert(conn, seasons: list[dict], now: float) -> str:
     with conn.cursor() as cur:
         cur.execute(CANDIDATES_SQL, {"tag": DISABLE_SUPERSTARS_TAG,
                                      "since": latest_end - 7 * 86400,
-                                     "known": [s["id"] for s in seasons]})
+                                     "known": known_ids})
         found = cur.fetchall()
     for name, typ, starts, recent in found:
         print(f"  {name!r:40} {typ:8} starts {starts}  games in last 14 days: {recent}")
@@ -531,7 +547,8 @@ def main() -> None:
                   f"in {built - t0:.0f}s" + ("  -> final" if final else ""), flush=True)
 
         # The alert is about seasons: a tournament running doesn't mean one is.
-        alert = season_gap_alert(conn, [s for s in discovered if s["kind"] == "season"], now)
+        alert = season_gap_alert(conn, [s for s in discovered if s["kind"] == "season"], now,
+                                 [s["id"] for s in discovered])
 
     manifest["seasons"] = entries(current)
     manifest["checked_at"] = iso_utc(time.time())

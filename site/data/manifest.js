@@ -161,6 +161,21 @@ window.MSSB_MANIFEST = {
    "definitions_sha256": "37b25edf6c71ad26a616ad2b7cfa0f03c77748145f62766e616c49fbadc411e3"
   },
   {
+   "slug": "mbachampionsleague2024",
+   "name": "MBA Champions League 2024",
+   "kind": "tournament",
+   "series": "mba",
+   "tag_set_id": 89,
+   "start": "2024-07-31",
+   "end": "2024-12-25",
+   "final": true,
+   "players": 20,
+   "qualified": 20,
+   "built_at": "2026-09-13T16:53:23+00:00",
+   "file": "seasons/mbachampionsleague2024.js",
+   "definitions_sha256": "37b25edf6c71ad26a616ad2b7cfa0f03c77748145f62766e616c49fbadc411e3"
+  },
+  {
    "slug": "netplaysuperstars19",
    "name": "Netplay Superstars 19",
    "kind": "tournament",
@@ -249,6 +264,21 @@ window.MSSB_MANIFEST = {
    "definitions_sha256": "37b25edf6c71ad26a616ad2b7cfa0f03c77748145f62766e616c49fbadc411e3"
   },
   {
+   "slug": "bobblestarsoffbracket",
+   "name": "Bobble: Stars-Off (Bracket)",
+   "kind": "tournament",
+   "series": "bobble",
+   "tag_set_id": 123,
+   "start": "2025-04-05",
+   "end": "2025-04-06",
+   "final": true,
+   "players": 21,
+   "qualified": 21,
+   "built_at": "2026-09-13T16:53:24+00:00",
+   "file": "seasons/bobblestarsoffbracket.js",
+   "definitions_sha256": "37b25edf6c71ad26a616ad2b7cfa0f03c77748145f62766e616c49fbadc411e3"
+  },
+  {
    "slug": "netplaysuperstars23",
    "name": "Netplay Superstars 23",
    "kind": "tournament",
@@ -323,6 +353,21 @@ window.MSSB_MANIFEST = {
    "definitions_sha256": "37b25edf6c71ad26a616ad2b7cfa0f03c77748145f62766e616c49fbadc411e3"
   },
   {
+   "slug": "mbachampionsleague2025",
+   "name": "MBA Champions League 2025",
+   "kind": "tournament",
+   "series": "mba",
+   "tag_set_id": 160,
+   "start": "2025-10-24",
+   "end": "2026-01-01",
+   "final": true,
+   "players": 16,
+   "qualified": 16,
+   "built_at": "2026-09-13T16:53:25+00:00",
+   "file": "seasons/mbachampionsleague2025.js",
+   "definitions_sha256": "37b25edf6c71ad26a616ad2b7cfa0f03c77748145f62766e616c49fbadc411e3"
+  },
+  {
    "slug": "interimsuperstarsoff",
    "name": "Interim Superstars Off",
    "kind": "season",
@@ -363,6 +408,21 @@ window.MSSB_MANIFEST = {
    "qualified": 35,
    "built_at": "2026-09-13T06:59:33+00:00",
    "file": "seasons/netplaysuperstars26.js",
+   "definitions_sha256": "37b25edf6c71ad26a616ad2b7cfa0f03c77748145f62766e616c49fbadc411e3"
+  },
+  {
+   "slug": "bobble2026",
+   "name": "Bobble 2026",
+   "kind": "tournament",
+   "series": "bobble",
+   "tag_set_id": 195,
+   "start": "2026-03-21",
+   "end": "2026-03-21",
+   "final": true,
+   "players": 23,
+   "qualified": 23,
+   "built_at": "2026-09-13T16:53:27+00:00",
+   "file": "seasons/bobble2026.js",
    "definitions_sha256": "37b25edf6c71ad26a616ad2b7cfa0f03c77748145f62766e616c49fbadc411e3"
   },
   {
@@ -419,7 +479,7 @@ window.MSSB_MANIFEST = {
    "final": false,
    "players": 96,
    "qualified": 24,
-   "built_at": "2026-09-13T13:17:58+00:00",
+   "built_at": "2026-09-13T16:53:29+00:00",
    "file": "seasons/s15superstarsoff.js",
    "definitions_sha256": "8196d8f11901a015a2449f9debc77f698de096256e0e57177eb04e8ac8ac6584"
   },
@@ -439,8 +499,8 @@ window.MSSB_MANIFEST = {
    "definitions_sha256": "37b25edf6c71ad26a616ad2b7cfa0f03c77748145f62766e616c49fbadc411e3"
   }
  ],
- "updated_at": "2026-09-13T13:17:58+00:00",
- "checked_at": "2026-09-13T13:17:58+00:00",
+ "updated_at": "2026-09-13T16:53:29+00:00",
+ "checked_at": "2026-09-13T16:53:29+00:00",
  "metric_rules": {
   "bat_barrel_pct": [
    true,

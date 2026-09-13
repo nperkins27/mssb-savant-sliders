@@ -119,13 +119,25 @@ function updatedLabel(s){
     ? new Date(s.built_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"}) : "?";
 }
 
-/* ---- tournaments: Netplay Superstars and SLICE ----
+/* ---- tournaments: Netplay Superstars, SLICE, Bobble, MBA Champions League ----
    Built like seasons but ranked with no minimums (see build_seasons.py). */
 const isTournament = s => !!s && s.kind === "tournament";
-const TOURNAMENT_SERIES = [["npss", "Netplay Superstars"], ["slice", "SLICE"]];
-/* "SLICE" or "Netplay Superstars", from the manifest's series tag. */
+/* [manifest series tag, name, picker heading], in picker order. */
+const TOURNAMENT_SERIES = [
+  ["npss",   "Netplay Superstars",   "Netplay Superstars tournaments"],
+  ["slice",  "SLICE",                "SLICE tournaments"],
+  ["bobble", "Bobble",               "Bobble tournaments"],
+  ["mba",    "MBA Champions League", "MBA Champions League"],
+];
+/* "Netplay Superstars, SLICE, Bobble and MBA Champions League" */
+const TOURNAMENT_LIST = TOURNAMENT_SERIES.map(([, name])=>name)
+  .reduce((out, name, i, all)=> i === 0 ? name : out + (i === all.length-1 ? " and " : ", ") + name, "");
+function seriesKey(s){
+  return s.series || ((TOURNAMENT_SERIES.find(([k])=>s.slug.startsWith(k)) || ["npss"])[0]);
+}
+/* "SLICE", "Bobble", ... from the manifest's series tag. */
 function tournamentSeries(s){
-  const series = s.series || (/^slice/.test(s.slug) ? "slice" : "npss");
+  const series = seriesKey(s);
   return (TOURNAMENT_SERIES.find(([k])=>k === series) || [series, series])[1];
 }
 const TOURNAMENT_NOTE =
@@ -150,6 +162,9 @@ function shortName(s){
   if((m = s.name.match(/^S(\d+) Superstars Off$/i)) || (m = s.name.match(/^Stars Off, Season (\d+)$/i))) return "S" + m[1];
   if((m = s.name.match(/^(?:Netplay Superstars|NPSS)\s*(\d+)$/i))) return "NPSS " + m[1];
   if((m = s.name.match(/^SLICE (\d{4})/i))) return "SLICE " + m[1];
+  if((m = s.name.match(/^MBA Champions League (\d{4})$/i))) return "MBA " + m[1];
+  /* The 2025 event's name ("Bobble: Stars-Off (Bracket)") has no year in it. */
+  if(/^Bobble/i.test(s.name)) return "Bobble " + (s.name.match(/\d{4}/) || [String(s.start).slice(0, 4)])[0];
   if(/^Interim/i.test(s.name)) return "Interim";
   return s.name;
 }
@@ -328,8 +343,8 @@ function seasonPicker(host, {selected, onChange, buttonId}){
   const meta = s => (s.final ? "" : "in progress · ") +
     (isTournament(s) ? `${s.players} players` : `${s.qualified} qualified`);
   const groups = [["Stars Off seasons", s=>!isTournament(s)],
-                  ...TOURNAMENT_SERIES.map(([, title])=>[`${title} tournaments`,
-                                                          s=>isTournament(s) && tournamentSeries(s) === title])]
+                  ...TOURNAMENT_SERIES.map(([key, , heading])=>[heading,
+                                                                s=>isTournament(s) && seriesKey(s) === key])]
     .map(([title, keep])=>{
       const list = seasons.filter(keep);
       return list.length ? `<div class="picker-group-title">${esc(title)}</div>` + list.map(s=>`
@@ -427,7 +442,7 @@ function definitionsHTML(){
     <p class="defs-note">In Stars Off seasons, every metric needs ${minGames} games in the season to
       qualify. Percentiles rank a player against others in the same season or tournament, and 100 is
       always best.</p>
-    <p class="defs-note defs-tournament"><b>Tournaments (Netplay Superstars and SLICE) have no
+    <p class="defs-note defs-tournament"><b>Tournaments (${esc(TOURNAMENT_LIST)}) have no
       minimums.</b> Every player who played is ranked on every metric they have data for; neither the
       games minimum nor the extra minimums listed below apply. Tournament fields are small and the
       competition is strong, so a player with only a few games, swings or at-bats can land at either
