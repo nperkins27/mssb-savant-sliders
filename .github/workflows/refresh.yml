@@ -18,7 +18,8 @@ on:
     branches: [main]
     paths:
       - "site/index.html"
-      - "mssb_savant_sliders.sql"
+      - "season_metrics.py"
+      - "season_metrics_sql.py"
       - "build_seasons.py"
       - ".github/workflows/refresh.yml"
 

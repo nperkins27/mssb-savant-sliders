@@ -76,6 +76,7 @@
   .srow.gen .slab{text-align:left}
   .raw{display:block;font-weight:400;font-size:11.5px;color:var(--muted);
        font-variant-numeric:tabular-nums;margin-top:1px}
+  .why{display:block;font-weight:400;font-size:11px;color:#8a4b00;margin-top:1px}
   .strack{background:var(--track);border:1px solid var(--trackline);height:31px;min-width:0}
   .strack>i{display:block;height:100%}
   .sval{background:var(--boxbg);border:2px dashed var(--boxline);height:47px;
@@ -122,7 +123,7 @@
 <div class="cols">
   <div class="panel">
     <h2 id="lb-title">Leaderboard</h2>
-    <p class="sub">Ranked by the selected metric&rsquo;s percentile. Click a name to load it.</p>
+    <p class="sub" id="lb-sub">Ranked by the selected metric&rsquo;s percentile. Click a name to load it.</p>
     <div id="lb"></div>
   </div>
   <div class="panel">
@@ -138,56 +139,44 @@
   Percentiles are 0&ndash;100 where <b>100 is always best</b> (a 100th-percentile chase rate is
   the lowest chase rate). Each season is ranked <b>within itself</b>, so a percentile compares a
   player only to others in that same season &mdash; not across seasons.
-  Metric names follow the original dashboard: note that <b>Bowser HR&nbsp;%</b> and
-  <b>King Boo HR&nbsp;%</b> apply no batter-character filter in the query, so they measure
-  overall HR rate and star-swing HR rate across all characters.
+  Players qualify with <b>10 games</b> in the season. Charge Timing also needs 25 charge swings
+  and counts only Bowser, Petey, DK and the Bro and Pianta variants; Charge Down-Input
+  (25 contacted charge swings) and HR&nbsp;% Allowed (50 at-bats faced) add King Boo and Wario.
+  Adjusted ELO applies the community formula to a player&rsquo;s latest rating in the season.
   Completed seasons are final; the current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
-  Data: Rio netplay database via the
-  <a href="https://github.com/baseball9000/Rio-Sabermetrics">Rio-Sabermetrics</a> queries.
+  Metric definitions follow Project Rio&rsquo;s season metrics. Data: Rio netplay database.
 </footer>
 </div>
 
-<!-- The manifest lists every season; each season's rows live in their own file
-     under data/seasons/ and are loaded on demand. Plain <script> files rather
-     than fetch() so the page also works opened straight from disk. -->
+<!-- The manifest lists every season; each season's players live in their own
+     file under data/seasons/ and are loaded on demand. Plain <script> files
+     rather than fetch() so the page also works opened straight from disk. -->
 <script src="data/manifest.js"></script>
 <script>
 "use strict";
-/* Columns are resolved BY NAME from each season's columns, so a change to the
-   query's SELECT list cannot silently misalign the page. */
-const USER_COL = "pitcher_username";
-let IDX = {};
+/* Keys are Rio's season_metric names. Metrics are looked up BY NAME in each
+   season file, so a change in the data's order cannot misalign the page.
+   n / d name the numerator and denominator for the counts shown under a rate. */
 const METRICS = [
-  {k:"elo",    label:"ELO",              v:"max_elo",                p:"maxelo_percentile",             g:"general",  f:"int"},
-  {k:"games",  label:"Games",            v:"user_gamesplayed",       p:"user_gamesplayed_percentile",   g:"general",  f:"int"},
-  {k:"bBarrel",label:"Barrels",          v:"batter_barrels",         p:"batter_barrel_percentile",      g:"batting",  f:"pct"},
-  {k:"chase",  label:"Chase",            v:"batter_chase",           p:"batter_chase_percentile",       g:"batting",  f:"pct"},
-  {k:"watch",  label:"Watch",            v:"batter_watch",           p:"batter_watch_percentile",       g:"batting",  f:"pct"},
-  {k:"bWhiff", label:"Whiff",            v:"batter_whiff",           p:"batter_whiff_percentile",       g:"batting",  f:"pct"},
-  {k:"ozone",  label:"O-Zone Contact",   v:"batter_ozonecontact",    p:"batter_ozone_contact_percentile",g:"batting", f:"pct"},
-  {k:"bK",     label:"K%",               v:"batter_kpercent",        p:"batterk_percentile",            g:"batting",  f:"pct"},
-  {k:"bBowser",label:"Bowser HR%",       v:"batter_bowserhrpercent", p:"batter_bowserhr_percentile",    g:"batting",  f:"pct"},
-  {k:"charge", label:"Charge Timing",    v:"charge_timing_percent",  p:"charge_timing_percentile",      g:"batting",  f:"pct"},
-  {k:"slap",   label:"Slap Timing",      v:"slap_timing_percent",    p:"slap_timing_percentile",        g:"batting",  f:"pct"},
-  {k:"kbhr",   label:"King Boo HR%",     v:"kbhr_percent",           p:"kbhr_percentile",               g:"batting",  f:"pct"},
-  {k:"pBarrel",label:"Barrels",          v:"pitcher_barrels_given",  p:"pitcher_barrel_percentile",     g:"pitching", f:"pct"},
-  {k:"pWhiff", label:"Whiff",            v:"pitcher_whiff",          p:"pitcher_whiff_percentile",      g:"pitching", f:"pct"},
-  {k:"pK",     label:"K%",               v:"pitcher_kpercent",       p:"pitcher_k_percentile",          g:"pitching", f:"pct"},
-  {k:"pBowser",label:"Bowser HR%",       v:"pitcher_bowserhrpercent",p:"pitcher_bowserhr_percentile",   g:"pitching", f:"pct"},
+  {k:"gen_adjusted_elo",          label:"Adjusted ELO",        g:"general",  f:"int"},
+  {k:"gen_games_played",          label:"Games Played",        g:"general",  f:"int"},
+  {k:"bat_barrel_pct",            label:"Barrel %",            g:"batting",  f:"pct", menu:"Barrel % (bat)",  n:"barrels",           d:"contacts"},
+  {k:"bat_chase_pct",             label:"Chase %",             g:"batting",  f:"pct",                          n:"chases",            d:"out-of-zone pitches"},
+  {k:"bat_whiff_pct",             label:"Whiff %",             g:"batting",  f:"pct", menu:"Whiff % (bat)",   n:"whiffs",            d:"swings"},
+  {k:"bat_ozone_contact_pct",     label:"O-Zone Contact %",    g:"batting",  f:"pct",                          n:"contacts",          d:"out-of-zone swings"},
+  {k:"bat_k_pct",                 label:"K %",                 g:"batting",  f:"pct", menu:"K % (bat)",       n:"strikeouts",        d:"plate appearances"},
+  {k:"bat_charge_timing_pct",     label:"Charge Timing",       g:"batting",  f:"pct",                          n:"well-timed swings", d:"charge swings"},
+  {k:"bat_slap_timing_pct",       label:"Slap Timing",         g:"batting",  f:"pct",                          n:"well-timed swings", d:"slap swings"},
+  {k:"bat_charge_down_input_pct", label:"Charge Down-Input %", g:"batting",  f:"pct",                          n:"down inputs",       d:"contacted charge swings"},
+  {k:"pitch_barrels_allowed_pct", label:"Barrels Allowed %",   g:"pitching", f:"pct",                          n:"barrels",           d:"contacts allowed"},
+  {k:"pitch_whiff_pct",           label:"Whiff %",             g:"pitching", f:"pct", menu:"Whiff % (pitch)", n:"whiffs",            d:"swings induced"},
+  {k:"pitch_k_pct",               label:"K %",                 g:"pitching", f:"pct", menu:"K % (pitch)",     n:"strikeouts",        d:"batters faced"},
+  {k:"pitch_hr_allowed_pct",      label:"HR % Allowed",        g:"pitching", f:"pct",                          n:"home runs",         d:"at-bats vs power hitters"},
 ];
-/* Slider rows sit under a group heading that already says the side, so they use
-   the short label from the dashboard. The metric menu has no such context, so it
-   spells the side out -- these are DESIGN.md section 3's names. */
-const MENU = {bBarrel:"Barrel % (bat)", bWhiff:"Whiff % (bat)", bK:"K % (bat)",
-  bBowser:"Bowser HR % (bat)", pBarrel:"Barrels Allowed %", pWhiff:"Whiff % (pitch)",
-  pK:"K % (pitch)", pBowser:"Bowser HR % (pitch)", chase:"Chase %", watch:"Watch %",
-  ozone:"O-Zone Contact %", games:"Games Played", kbhr:"King Boo HR %"};
 const GROUPS = [["general",null],["batting","Batting"],["pitching","Pitching"]];
 
-/* Colour marks the GROUP, not the value: green for general, blue for the rest.
-   DESIGN.md describes a blue-to-red value gradient, but the source dashboard
-   uses flat per-group colour -- Charge Timing at 16 is the same blue as Chase
-   at 100. The dashboard wins. */
+/* Colour marks the GROUP, not the value: green for general, blue for the rest,
+   as on the source dashboard. */
 const GCOLOR = {general:"var(--green)", batting:"var(--blue)", pitching:"var(--blue)"};
 
 function fmt(m, v){
@@ -195,13 +184,13 @@ function fmt(m, v){
   if(m.f==="int") return Math.round(v).toLocaleString();
   return (v*100).toFixed(1)+"%";
 }
-function menuLabel(m){ return MENU[m.k] || m.label; }
+function menuLabel(m){ return m.menu || m.label; }
 /* Usernames come from the database and are rendered on a public page. */
 function esc(s){
   return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
-let SEASONS = [], rows = [], curSeason = -1;
+let SEASONS = [], RULES = {}, players = [], SLOT = {}, FI = {}, curSeason = -1;
 
 function init(){
   const warn = document.getElementById("warn");
@@ -211,19 +200,20 @@ function init(){
     return;
   }
   SEASONS = MSSB_MANIFEST.seasons;   /* oldest first */
+  RULES = MSSB_MANIFEST.metric_rules || {};
 
   const ms = document.getElementById("metric");
   METRICS.forEach(x=>{
     const o=document.createElement("option"); o.value=x.k; o.textContent=menuLabel(x);
     ms.appendChild(o);
   });
-  ms.value="elo";
+  ms.value = "gen_adjusted_elo";
 
   const ss = document.getElementById("season");
   SEASONS.forEach((s,i)=>{
     const o=document.createElement("option");
     o.value=String(i);
-    o.textContent = s.name + (s.final ? "" : " (in progress)") + " · " + s.users + " players";
+    o.textContent = s.name + (s.final ? "" : " (in progress)") + " · " + s.qualified + " qualified";
     ss.appendChild(o);
   });
   ss.value = String(SEASONS.length-1);   /* newest season by default */
@@ -259,29 +249,31 @@ function selectSeason(i){
   document.head.appendChild(tag);
 }
 
-/* Percentiles are computed WITHIN each season by the SQL, so switching season
-   swaps the whole comparison pool -- never mix rows across seasons. */
+/* Percentiles are ranked WITHIN each season, so switching season swaps the
+   whole comparison pool -- never mix players across seasons. */
 function loadSeason(i){
   const warn = document.getElementById("warn");
   const s = SEASONS[i];
   const d = (window.MSSB_SEASONS||{})[s.slug];
-  IDX = {};
-  rows = [];
+  const ps = document.getElementById("player");
+  const keep = ps.value;
+  players = []; SLOT = {}; FI = {};
   if(!d){
     warn.innerHTML = `<div class="warn"><code>data/${esc(s.file)}</code> loaded but did
       not contain ${esc(s.name)}. Re-run <code>build_seasons.py</code>.</div>`;
   } else {
-    (d.columns||[]).forEach((c,n)=>{ if(!(c in IDX)) IDX[c]=n; });
-    const need = [USER_COL].concat(...METRICS.map(m=>[m.v,m.p]));
-    const missing = need.filter(n=>!(n in IDX));
+    (d.metrics||[]).forEach((k,n)=>{ SLOT[k]=n; });
+    (d.fields||[]).forEach((f,n)=>{ FI[f]=n; });
+    const missing = METRICS.map(m=>m.k).filter(k=>!(k in SLOT))
+      .concat(["value","percentile","pool_size","numerator","denominator","qualified"].filter(f=>!(f in FI)));
     if(missing.length){
       warn.innerHTML = `<div class="warn"><b>${esc(s.name)}: missing ${missing.length}
-        expected column(s):</b> ${esc(missing.join(", "))}.<br>Re-run
-        <code>build_seasons.py</code>; if that doesn't fix it, the SQL and
-        this page have diverged.</div>`;
+        expected metric(s) or field(s):</b> ${esc(missing.join(", "))}.<br>Re-run
+        <code>build_seasons.py</code>; if that doesn't fix it, the data and this page
+        have diverged.</div>`;
     } else {
       warn.innerHTML = "";
-      rows = d.rows.map(r=>({name:r[IDX[USER_COL]], r}));
+      players = d.players.map(([id, name, m])=>({id, name, m}));
     }
   }
 
@@ -292,49 +284,58 @@ function loadSeason(i){
     `<br><b>${esc(s.name)}</b>` +
     (s.final ? `<span class="badge">FINAL</span>` : `<span class="badge live">IN PROGRESS</span>`) +
     ` &middot; ${esc(s.start)} to ${esc(s.end)}` +
-    ` &middot; ${rows.length} qualified players` +
+    ` &middot; ${s.qualified} qualified players` +
     ` &middot; updated ${esc(updated)}`;
 
-  const ps = document.getElementById("player");
   ps.innerHTML = "";
-  [...rows].sort((a,b)=>a.name.localeCompare(b.name)).forEach(x=>{
+  players.forEach(x=>{   /* already sorted by name */
     const o=document.createElement("option"); o.value=x.name; o.textContent=x.name;
     ps.appendChild(o);
   });
-  if(rows.length) ps.value = rows[0].name;
+  /* Stay on the same player across seasons when they played in both;
+     otherwise open the top Adjusted ELO player. */
+  const top = board(METRICS[0])[0];
+  if(players.some(p=>p.name===keep)) ps.value = keep;
+  else if(top) ps.value = top.name;
 
   renderLB(); renderPlayer();
 }
 
-function val(row, m){ return row.r[IDX[m.v]]; }
-function pct(row, m){ const p=row.r[IDX[m.p]]; return p==null?null:+p; }
+function cell(p, m){
+  const c = p.m[SLOT[m.k]];
+  return c ? {value:c[FI.value], pct:c[FI.percentile], pool:c[FI.pool_size],
+              num:c[FI.numerator], den:c[FI.denominator], ok:c[FI.qualified]} : null;
+}
+
+/* Qualified players for one metric, best first; ties broken by name, like
+   Rio's leaderboard endpoint. */
+function board(m){
+  return players.filter(p=>{ const c=cell(p,m); return c && c.ok; })
+    .sort((a,b)=> cell(b,m).pct - cell(a,m).pct || a.name.localeCompare(b.name));
+}
 
 function renderLB(){
-  const mk = document.getElementById("metric").value;
-  const m = METRICS.find(x=>x.k===mk);
+  const m = METRICS.find(x=>x.k===document.getElementById("metric").value);
   const q = document.getElementById("q").value.trim().toLowerCase();
   document.getElementById("lb-title").textContent = "Leaderboard — " + menuLabel(m);
+  const ranked = board(m);
+  document.getElementById("lb-sub").textContent =
+    `${ranked.length} qualified, ranked by percentile. Click a name to load it.`;
   const colr = GCOLOR[m.g];
-  let list = rows.filter(r=>!q || r.name.toLowerCase().includes(q));
-  list = [...list].sort((a,b)=>{
-    const pa=pct(a,m), pb=pct(b,m);
-    if(pa==null && pb==null) return 0;
-    if(pa==null) return 1;            /* null percentiles sort last */
-    if(pb==null) return -1;
-    return pb-pa;
-  });
   const el = document.getElementById("lb");
-  const empty = rows.length
+  const rows = ranked.map((p,i)=>({p, rank:i+1}))
+    .filter(x=>!q || x.p.name.toLowerCase().includes(q));
+  const empty = ranked.length
     ? `<p class="sub">No players match.</p>`
-    : `<p class="sub">No qualified players yet. Players appear once they clear the
-       qualification floors, usually a few days into a new season.</p>`;
-  el.innerHTML = list.map((r,i)=>{
-    const p=pct(r,m);
+    : `<p class="sub">No qualified players yet. Players appear once they reach 10 games,
+       usually a few days into a new season.</p>`;
+  el.innerHTML = rows.map(({p, rank})=>{
+    const c = cell(p,m);
     return `<div class="lb-row">
-      <div class="lb-rank">${i+1}</div>
-      <div class="lb-name" data-u="${esc(r.name)}">${esc(r.name)}</div>
-      <div class="lb-val">${fmt(m,val(r,m))}</div>
-      <div class="lb-barwrap"><div class="lb-track"><i style="width:${p==null?0:p}%;background:${colr}"></i></div></div>
+      <div class="lb-rank">${rank}</div>
+      <div class="lb-name" data-u="${esc(p.name)}">${esc(p.name)}</div>
+      <div class="lb-val">${fmt(m,c.value)}</div>
+      <div class="lb-barwrap"><div class="lb-track"><i style="width:${c.pct}%;background:${colr}"></i></div></div>
     </div>`;
   }).join("") || empty;
   el.querySelectorAll(".lb-name").forEach(n=>{
@@ -342,20 +343,33 @@ function renderLB(){
   });
 }
 
+/* Why a metric shows n/a, from the same floors the build used. */
+function whyNot(m, c, games){
+  const r = RULES[m.k] || [];
+  if(r[1]!=null && (games||0) < r[1]) return `needs ${r[1]} games (has ${games||0})`;
+  if(r[2]!=null && (c.den||0) < r[2]) return `needs ${r[2]} ${m.d} (has ${c.den||0})`;
+  if(c.value==null) return "no data this season";
+  return "not qualified";
+}
+
 function renderPlayer(){
   const name = document.getElementById("player").value;
-  const row = rows.find(r=>r.name===name);
+  const p = players.find(x=>x.name===name);
   document.getElementById("pd-title").textContent = name || "Player";
   const el = document.getElementById("pd");
-  if(!row){ el.innerHTML=""; return; }
+  if(!p){ el.innerHTML=""; return; }
+  const games = cell(p, METRICS.find(m=>m.k==="gen_games_played")).value;
   el.innerHTML = GROUPS.map(([gk,gl])=>{
     const bars = METRICS.filter(m=>m.g===gk).map(m=>{
-      const v=val(row,m), p=pct(row,m), colr=GCOLOR[gk];
-      const track = `<div class="strack"><i style="width:${p==null?0:p}%;background:${colr}"></i></div>`;
-      const lab = `<div class="slab">${m.label}<span class="raw">${fmt(m,v)}</span></div>`;
-      const box = p==null
-        ? `<div class="sval na" title="below this metric's qualification floor">n/a</div>`
-        : `<div class="sval" title="${p.toFixed(1)}th percentile">${Math.round(p)}</div>`;
+      const c = cell(p,m) || {}, colr = GCOLOR[gk];
+      const counts = c.den!=null
+        ? ` <span title="${c.num} ${esc(m.n)} of ${c.den} ${esc(m.d)}">&middot; ${c.num}/${c.den}</span>` : "";
+      const why = c.ok ? "" : `<span class="why">${esc(whyNot(m, c, games))}</span>`;
+      const track = `<div class="strack"><i style="width:${c.ok?c.pct:0}%;background:${colr}"></i></div>`;
+      const lab = `<div class="slab">${m.label}<span class="raw">${fmt(m,c.value)}${counts}</span>${why}</div>`;
+      const box = c.ok
+        ? `<div class="sval" title="${c.pct.toFixed(1)}th percentile of ${c.pool} players">${Math.round(c.pct)}</div>`
+        : `<div class="sval na" title="${esc(whyNot(m, c, games))}">n/a</div>`;
       return gk==="general"
         ? `<div class="srow gen"><div class="gstack">${lab}${track}</div>${box}</div>`
         : `<div class="srow">${lab}${track}${box}</div>`;

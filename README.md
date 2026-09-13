@@ -9,17 +9,32 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 |---|---|
 | `site/index.html` | The dashboard page |
 | `site/data/manifest.js` / `.json` | List of seasons: dates, final or in progress, when each was built |
-| `site/data/seasons/<slug>.js` | One season's player rows, loaded when that season is picked |
+| `site/data/seasons/<slug>.js` | One season's players and all 14 metrics, loaded when that season is picked |
 | `build_seasons.py` | Builds whatever season data is due (read-only against the database) |
-| `mssb_savant_sliders.sql` | The Savant Sliders query the build runs once per season |
+| `season_metrics.py` | Metric definitions, floors, adjusted ELO and percentile ranking. **Vendored verbatim** from ProjectRio-web |
+| `season_metrics_sql.py` | The season discovery rule and the three per-season queries, vendored from ProjectRio-web |
 | `.github/workflows/refresh.yml` | Daily refresh + deploy to GitHub Pages |
+
+## The metrics
+
+The site computes Project Rio's season metrics: the same 14 metrics, floors and
+percentiles as the `season_metric` table added in
+[ProjectRio-web PR #154](https://github.com/ProjectRio/ProjectRio-web/pull/154).
+The two definition files are copied from that PR rather than rewritten, and
+`build_seasons.py` makes the same three queries per season as Rio's job, so the
+numbers match.
+
+Each season file stores, for every player and metric, the same columns as a
+`season_metric` row: value, percentile, pool size, numerator, denominator and
+whether the player qualified. Players who played at least one game are included,
+qualified or not, so anyone can look themselves up.
 
 ## How the refresh works
 
-- **Seasons are discovered, not listed.** Each run reads `tag_set` for main-line
-  Superstars Off seasons (`S15 Superstars Off`, `Stars Off, Season 7`,
-  `Interim Superstars Off`) that carry the Disable Superstars code, starting at
-  Season 7. Hazards, Randoms, tournaments and so on never match.
+- **Seasons are discovered, not listed**, with Rio's own rule: `tag_set` rows
+  typed Season whose name ends in "Superstars Off" or starts with "Stars Off,
+  Season", plus S9 Superstars Off (typed League). That is S4 through the current
+  season, including Interim. Hazards, Randoms and tournaments never match.
 - **Only unfinished seasons are queried.** A season is rebuilt on every run until
   the first run more than 2 days after its `end_date`. That run is its final build,
   and it is never queried again.
@@ -28,13 +43,13 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 - **Daily at about 4 AM ET.** The schedule fires at 08:17 and 09:17 UTC. The first
   run at or after 4 AM Eastern does the work and the other skips, so it stays at
   4 AM through daylight saving changes.
-- **Changing the SQL rebuilds everything once.** Each season records a fingerprint
-  of the query that built it, so editing `mssb_savant_sliders.sql` makes every
-  season stale and the next run rebuilds the whole history (about 17 minutes).
+- **Changing the definitions rebuilds everything once.** Each season records a
+  fingerprint of `season_metrics.py` and `season_metrics_sql.py`, so editing either
+  makes every season stale and the next run rebuilds the whole history.
 - **Alert.** If no recognised season has run for 21 days and none is scheduled, the
   workflow fails, and GitHub emails you. The build log lists stars-off tag sets that
-  didn't match, which is where a renamed season would show up. Fix it by adjusting
-  `SEASON_NAME_PATTERN` in `build_seasons.py`.
+  weren't discovered, which is where a renamed season would show up. Fix it by
+  adjusting `SEASON_DISCOVERY_SQL` (and the same rule upstream in Rio).
 
 ## Run it locally
 
@@ -69,8 +84,15 @@ connection timeout.
 
 ## Changing the metrics
 
-The page reads columns by name. To change the metric set, edit
-`mssb_savant_sliders.sql` and the `METRICS` list in `site/index.html` together, then
-push. The push triggers a run, and the new SQL fingerprint rebuilds every season.
-If the two disagree, the page names the missing columns rather than showing
-wrong numbers.
+Change them upstream in ProjectRio-web first, then copy `app/season_metrics.py` over
+`season_metrics.py` unchanged (keep the three-line provenance comment at the top),
+and carry any query change into `season_metrics_sql.py`, writing SQLAlchemy's
+`:name` parameters as `%(name)s`. If a metric is added, removed or renamed, update
+the `METRICS` list in `site/index.html` too. Push: the new fingerprint rebuilds
+every season. The page looks metrics up by name, so if the data and the page
+disagree it lists what is missing rather than showing wrong numbers.
+
+Once PR #154 is merged and its backfill has run, the build could read the
+`season_metric` table directly instead of computing the metrics itself. Only
+`collect()` and `season_payload()` would change; the files, manifest and page stay
+the same.
