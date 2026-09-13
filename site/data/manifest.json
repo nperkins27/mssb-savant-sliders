@@ -116,11 +116,11 @@
    "end": "2026-12-15",
    "final": false,
    "users": 33,
-   "built_at": "2026-09-13T00:29:51+00:00",
+   "built_at": "2026-09-13T00:39:08+00:00",
    "file": "seasons/s15superstarsoff.js",
    "sql_sha256": "c41b1bf96d54fa4ff0718d26b100cf091b13e139a4c9cdbb151292cfe316f629"
   }
  ],
- "updated_at": "2026-09-13T00:29:51+00:00",
- "checked_at": "2026-09-13T00:29:51+00:00"
+ "updated_at": "2026-09-13T00:39:08+00:00",
+ "checked_at": "2026-09-13T00:39:09+00:00"
 }
