@@ -132,6 +132,28 @@ dialog.defs::backdrop{background:var(--backdrop)}
 .defs dd{margin:3px 0 0;font-size:13px;line-height:1.5}
 .defs-rule{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 
+/* ---- season / tournament picker ---- */
+.picker{position:relative;display:block}
+.picker-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+            background:var(--surface);color:var(--ink);border:1px solid var(--line);padding:7px 9px;
+            font-size:14px;font-family:var(--sans);cursor:pointer;text-align:left}
+.picker-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.picker-caret{flex:none;color:var(--muted);font-size:12px}
+.picker-panel{position:absolute;z-index:40;top:calc(100% + 4px);left:0;width:max-content;min-width:100%;
+              max-width:min(440px, calc(100vw - 24px));max-height:min(62vh, 480px);overflow:auto;
+              background:var(--chrome);border:1px solid var(--line);box-shadow:0 10px 30px var(--shadow);
+              padding:6px 0 8px;text-transform:none;letter-spacing:0}
+.picker-hint{margin:4px 12px 6px;font-size:12px;line-height:1.45;color:var(--muted)}
+.picker-hint.picker-warn{color:var(--why)}
+.picker-group-title{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);padding:9px 12px 3px}
+.picker-row{display:flex;align-items:center;gap:8px;padding:2px 12px}
+.picker-row:hover{background:var(--surface-hover)}
+.picker-row input{margin:0;flex:none;accent-color:var(--blue)}
+.picker-name{background:none;border:0;padding:4px 0;font-family:var(--sans);font-size:13.5px;color:var(--ink);
+             cursor:pointer;text-align:left}
+.picker-name:hover{text-decoration:underline}
+.picker-meta{margin-left:auto;padding-left:16px;font-size:11.5px;color:var(--muted);white-space:nowrap}
+
 /* ---- tournament note (no minimums) ---- */
 .mode-note{background:var(--chrome);border:1px solid var(--line);border-left:4px solid var(--why);
            padding:9px 14px;margin:-6px 0 18px;font-size:13px;line-height:1.5;color:var(--ink)}

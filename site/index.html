@@ -10,6 +10,7 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
 </script>
 <link rel="stylesheet" href="shared.css">
 <style>
+  .season-field{width:320px;max-width:100%}
   .cols{display:grid;grid-template-columns:360px minmax(0,1fr);gap:26px;align-items:start}
   @media(max-width:1040px){.cols{grid-template-columns:1fr}}
 
@@ -58,9 +59,9 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
 <div id="warn"></div>
 
 <div class="controls">
-  <div>
-    <label for="season">Season / Tournament</label>
-    <select id="season"></select>
+  <div class="season-field">
+    <label for="season-btn">Season / Tournament</label>
+    <div id="season-picker"></div>
   </div>
   <div>
     <label for="metric">Leaderboard metric</label>
@@ -102,6 +103,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   games and wins.
   <b>Netplay Superstars tournaments have no minimums</b>: every player who played is ranked on every
   metric they have data for.
+  <b>Selecting several</b> seasons or tournaments ranks players on their combined totals; minimums
+  apply to the totals unless a tournament is included, and ELO isn&rsquo;t shown.
   Completed seasons are final; the current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
   Metric definitions follow Project Rio&rsquo;s season metrics. Data: Rio netplay database.
 </footer>
@@ -114,7 +117,7 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
 <script>
 "use strict";
 const {METRICS, GROUPS, GCOLOR, fmt, menuLabel, esc, whyNot} = MSSB;
-let S = null, curSeason = -1;   /* the season on screen, and the one last picked */
+let S = null, curKey = "";   /* the selection on screen, and the key of the one last picked */
 
 function init(){
   document.getElementById("defs-btn").onclick = MSSB.openDefinitions;
@@ -131,35 +134,33 @@ function init(){
   });
   ms.value = "gen_adjusted_elo";
 
-  const ss = document.getElementById("season");
-  MSSB.fillSeasonSelect(ss, s=>String(MSSB.seasons.indexOf(s)), s=>
-    s.name + (s.final ? "" : " (in progress)") + " · " +
-    (MSSB.isTournament(s) ? s.players + " players" : s.qualified + " qualified"));
-  const start = MSSB.seasons.indexOf(MSSB.latestSeason());   /* newest season by default */
-  ss.value = String(start);
+  const start = [MSSB.latestSeason().slug];   /* newest season by default */
+  MSSB.seasonPicker(document.getElementById("season-picker"),
+                    {selected: start, onChange: selectSeason, buttonId: "season-btn"});
 
   ms.onchange = renderLB;
   document.getElementById("player").onchange = renderPlayer;
-  ss.onchange = ()=>selectSeason(+ss.value);
 
   selectSeason(start);
 }
 
-function selectSeason(i){
-  curSeason = i;
+/* slugs: one season/tournament, or several to combine. */
+function selectSeason(slugs){
+  const key = MSSB.selectionKey(slugs);
+  curKey = key;
   let settled = false;
-  /* Only flash "Loading" when the file is actually slow to arrive. */
+  /* Only flash "Loading" when the files are actually slow to arrive. */
   setTimeout(()=>{
-    if(settled || curSeason!==i) return;
+    if(settled || curKey!==key) return;
     document.getElementById("lb").innerHTML =
-      `<p class="sub">Loading ${esc(MSSB.seasons[i].name)}&hellip;</p>`;
+      `<p class="sub">Loading ${esc(MSSB.selectionLabel(slugs))}&hellip;</p>`;
     document.getElementById("pd").innerHTML = "";
   }, 150);
-  MSSB.loadSeason(MSSB.seasons[i].slug).then(
-    season=>{ settled = true; if(curSeason===i) show(season); },
+  MSSB.loadSelection(slugs).then(
+    season=>{ settled = true; if(curKey===key) show(season); },
     err=>{
       settled = true;
-      if(curSeason!==i) return;
+      if(curKey!==key) return;
       S = null;
       document.getElementById("lb").innerHTML = "";
       document.getElementById("pd").innerHTML = "";
@@ -177,18 +178,29 @@ function show(season){
         have diverged.</div>`
     : "";
 
-  const tournament = MSSB.isTournament(s);
+  const tournament = MSSB.isTournament(s), combined = MSSB.isCombined(s), open = MSSB.noMinimums(s);
+  const parts = combined
+    ? [s.seasonCount && `${s.seasonCount} season${s.seasonCount===1 ? "" : "s"}`,
+       s.tournamentCount && `${s.tournamentCount} tournament${s.tournamentCount===1 ? "" : "s"}`]
+        .filter(Boolean).join(" + ") + " combined" : "";
   document.getElementById("meta").innerHTML =
     `Mario Superstar Baseball &mdash; advanced player percentiles` +
-    `<br><b>${esc(s.name)}</b>` + MSSB.badge(s) +
+    `<br><b title="${esc(s.name)}">${esc(combined ? s.label : s.name)}</b>` + MSSB.badge(s) +
+    (combined ? ` &middot; ${esc(parts)}` : "") +
     ` &middot; ${esc(s.start)} to ${esc(s.end)}` +
-    (tournament ? ` &middot; ${s.players} players &middot; tournament, no minimums`
-                : ` &middot; ${s.qualified} qualified players`) +
+    (open ? ` &middot; ${s.players} players &middot; no minimums`
+          : ` &middot; ${s.qualified} qualified players`) +
     ` &middot; updated ${esc(MSSB.updatedLabel(s))}`;
   const note = document.getElementById("mode-note");
-  note.hidden = !tournament;
-  note.innerHTML = tournament
-    ? `<b>Netplay Superstars tournament: no minimums.</b> ${esc(MSSB.TOURNAMENT_NOTE)}` : "";
+  note.hidden = !(tournament || combined);
+  note.innerHTML = combined
+    ? `<b>Combined selection:</b> ${esc(s.name)}. Players are ranked on their totals across all of
+       them. <b>${esc(MSSB.ELO_NOTE)}</b> ` +
+      (s.includesTournament
+        ? `Includes a Netplay Superstars tournament, so no minimums apply.`
+        : `Season minimums apply to the combined totals (10 games, and so on).`)
+    : tournament
+      ? `<b>Netplay Superstars tournament: no minimums.</b> ${esc(MSSB.TOURNAMENT_NOTE)}` : "";
 
   ps.innerHTML = "";
   season.players.forEach(x=>{   /* already sorted by name */
@@ -196,8 +208,9 @@ function show(season){
     ps.appendChild(o);
   });
   /* Stay on the same player across seasons when they played in both;
-     otherwise open the top ELO player. */
-  const top = season.board(METRICS[0])[0];
+     otherwise open the top ELO player (most games, for a multiple selection). */
+  const top = season.board(METRICS[0])[0] ||
+    season.board(METRICS.find(m=>m.k==="gen_games_played"))[0] || season.players[0];
   if(season.players.some(p=>p.name===keep)) ps.value = keep;
   else if(top) ps.value = top.name;
 
@@ -208,10 +221,11 @@ function renderLB(){
   if(!S) return;
   const m = METRICS.find(x=>x.k===document.getElementById("metric").value);
   document.getElementById("lb-title").textContent = "Leaderboard — " + menuLabel(m);
-  const ranked = S.board(m), tournament = MSSB.isTournament(S.entry);
-  document.getElementById("lb-sub").textContent = tournament
-    ? `${ranked.length} players, no minimums, ranked by percentile. Click a name to load it.`
-    : `${ranked.length} qualified, ranked by percentile. Click a name to load it.`;
+  const ranked = S.board(m), open = MSSB.noMinimums(S.entry), combined = MSSB.isCombined(S.entry);
+  document.getElementById("lb-sub").textContent = combined && m.k === "gen_adjusted_elo"
+    ? "Not ranked for multiple selections."
+    : (open ? `${ranked.length} players, no minimums` : `${ranked.length} qualified`) +
+      (combined ? ", ranked on combined totals" : ", ranked by percentile") + ". Click a name to load it.";
   const colr = GCOLOR[m.g];
   const el = document.getElementById("lb");
   el.innerHTML = ranked.map((p,i)=>{
@@ -222,10 +236,12 @@ function renderLB(){
       <div class="lb-val">${fmt(m,c.value)}</div>
       <div class="lb-barwrap"><div class="lb-track"><i style="width:${c.pct}%;background:${colr}"></i></div></div>
     </div>`;
-  }).join("") || (tournament
-    ? `<p class="sub">No player has data for this metric in this tournament.</p>`
-    : `<p class="sub">No qualified players yet. Players appear once they reach
-       10 games, usually a few days into a new season.</p>`);
+  }).join("") || (combined && m.k === "gen_adjusted_elo"
+    ? `<p class="sub"><b>${esc(MSSB.ELO_NOTE)}</b> Pick another metric, or a single season or tournament.</p>`
+    : open
+      ? `<p class="sub">No player has data for this metric in this selection.</p>`
+      : `<p class="sub">No qualified players yet. Players appear once they reach
+         10 games, usually a few days into a new season.</p>`);
   el.querySelectorAll(".lb-name").forEach(n=>{
     n.onclick = ()=>{ document.getElementById("player").value=n.dataset.u; renderPlayer(); };
   });

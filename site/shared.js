@@ -126,32 +126,42 @@ const TOURNAMENT_NOTE =
 function latestSeason(){
   return [...seasons].reverse().find(s=>!isTournament(s)) || seasons[seasons.length-1];
 }
-/* Fill a <select> with seasons and tournaments in separate groups, oldest first. */
-function fillSeasonSelect(select, valueOf, labelOf){
-  select.innerHTML = "";
-  [["Stars Off seasons", s=>!isTournament(s)], ["Netplay Superstars tournaments", isTournament]]
-    .forEach(([title, keep])=>{
-      const list = seasons.filter(keep);
-      if(!list.length) return;
-      const group = document.createElement("optgroup");
-      group.label = title;
-      list.forEach(s=>{
-        const o = document.createElement("option");
-        o.value = valueOf(s); o.textContent = labelOf(s);
-        group.appendChild(o);
-      });
-      select.appendChild(group);
-    });
+/* ---- multiple selections ----
+   Several seasons and/or tournaments shown as one: players are ranked on
+   their totals across the selection (see combine()). */
+const isCombined = s => !!s && s.kind === "combined";
+/* Tournaments have no minimums, and so does any selection that includes one. */
+const noMinimums = s => isTournament(s) || (isCombined(s) && s.includesTournament);
+const ELO_NOTE = "ELO isn't shown when more than one season or tournament is selected.";
+/* Manifest order (oldest first), unknown slugs dropped, duplicates removed. */
+function orderSlugs(slugs){ return seasons.filter(s=>slugs.includes(s.slug)).map(s=>s.slug); }
+const selectionKey = slugs => orderSlugs(slugs).join("+");
+function shortName(s){
+  let m;
+  if((m = s.name.match(/^S(\d+) Superstars Off$/i)) || (m = s.name.match(/^Stars Off, Season (\d+)$/i))) return "S" + m[1];
+  if((m = s.name.match(/^(?:Netplay Superstars|NPSS)\s*(\d+)$/i))) return "NPSS " + m[1];
+  if(/^Interim/i.test(s.name)) return "Interim";
+  return s.name;
+}
+/* "S15 Superstars Off" for one; "S11 + S12 + S13" for a few; "6 selected" beyond that. */
+function selectionLabel(slugs){
+  const list = orderSlugs(slugs).map(sl=>bySlug[sl]);
+  if(list.length === 1) return list[0].name;
+  return list.length <= 4 ? list.map(shortName).join(" + ") : `${list.length} selected`;
 }
 
 /* Why a metric shows n/a, from the same floors the build used. Tournaments
-   have no floors, so there it only ever means the player has no data. */
+   (and selections that include one) have no floors, so there it only ever
+   means the player has no data. */
 function whyNot(m, c, games, entry){
-  if(isTournament(entry)) return c.value==null ? "no data in this tournament" : "not qualified";
-  const r = rules[m.k] || [];
-  if(r[1]!=null && (games||0) < r[1]) return `needs ${r[1]} games (has ${games||0})`;
-  if(r[2]!=null && (c.den||0) < r[2]) return `needs ${r[2]} ${m.d} (has ${c.den||0})`;
-  if(c.value==null) return "no data this season";
+  if(isCombined(entry) && m.k === "gen_adjusted_elo") return "not shown for multiple selections";
+  if(noMinimums(entry)) {
+    return c.value==null ? `no data in this ${isCombined(entry) ? "selection" : "tournament"}` : "not qualified";
+  }
+  const r = rules[m.k] || [], scope = isCombined(entry) ? " combined" : "";
+  if(r[1]!=null && (games||0) < r[1]) return `needs ${r[1]} games${scope} (has ${games||0})`;
+  if(r[2]!=null && (c.den||0) < r[2]) return `needs ${r[2]} ${m.d}${scope} (has ${c.den||0})`;
+  if(c.value==null) return isCombined(entry) ? "no data in this selection" : "no data this season";
   return "not qualified";
 }
 
@@ -202,6 +212,185 @@ function loadSeason(slug){
   return loading[slug];
 }
 
+/* Port of Rio's season_metrics.percentile_ranks(): 0-100 where 100 is always
+   best, tied values take the lower rank (like Postgres percent_rank()), and a
+   lone qualifier scores 100. */
+function percentileRanks(values, higherIsBetter){
+  const n = values.length;
+  if(!n) return [];
+  if(n === 1) return [100];
+  const below = new Map();
+  [...values].sort((a,b)=>a-b).forEach((v,i)=>{ if(!below.has(v)) below.set(v, i); });
+  return values.map(v=>{ const pr = below.get(v) / (n-1); return (higherIsBetter ? pr : 1 - pr) * 100; });
+}
+
+/* Rank players on their totals across several seasons/tournaments. Mirrors
+   Rio's build_rows() and qualifies() on summed counts: each rate is recomputed
+   from the summed numerator and denominator (27 x runs / outs for per-9s),
+   games are summed, and the season floors apply to those totals -- unless a
+   tournament is included, when there are none. ELO has no meaningful total,
+   so it is never ranked here. Returns the same shape as a single season. */
+const PER_9 = new Set(METRICS.filter(m=>m.f==="per9").map(m=>m.k));
+function combine(views){
+  const entries = views.map(v=>v.entry);
+  const includesTournament = entries.some(isTournament);
+  const acc = new Map();
+  views.forEach(v=>v.players.forEach(p=>{
+    let a = acc.get(p.id);
+    if(!a) acc.set(p.id, a = {id: p.id, name: p.name, games: 0, counts: {}});
+    a.name = p.name;                       /* views run oldest first: newest name wins */
+    a.games += v.games(p) || 0;
+    METRICS.forEach(m=>{
+      const c = v.cell(p, m);
+      if(!c || c.den == null) return;
+      const t = a.counts[m.k] || (a.counts[m.k] = [0, 0]);
+      t[0] += c.num || 0;
+      t[1] += c.den || 0;
+    });
+  }));
+  const people = [...acc.values()].filter(a=>a.games > 0)
+    .sort((x,y)=>{ const a = x.name.toLowerCase(), b = y.name.toLowerCase(); return a < b ? -1 : a > b ? 1 : 0; });
+
+  const cells = new Map(people.map(a=>[a.id, []]));
+  METRICS.forEach((m, mi)=>{
+    const r = rules[m.k] || [true, null, null];
+    const staged = people.map(a=>{
+      let value = null, num = null, den = null;
+      if(m.k === "gen_games_played") value = a.games;
+      else if(m.k !== "gen_adjusted_elo"){
+        [num, den] = a.counts[m.k] || [0, 0];
+        value = den ? (PER_9.has(m.k) ? 27 : 1) * num / den : null;
+      }
+      let ok = value != null;
+      if(ok && !includesTournament){
+        if(r[1] != null && a.games < r[1]) ok = false;
+        if(r[2] != null && (den || 0) < r[2]) ok = false;
+      }
+      if(den != null && den <= 0) ok = false;
+      return {id: a.id, cell: [value, null, null, num, den, ok]};   /* FIELDS order */
+    });
+    const pool = staged.filter(s=>s.cell[5]);
+    percentileRanks(pool.map(s=>s.cell[0]), r[0] !== false).forEach((pct, i)=>{
+      pool[i].cell[1] = pct;
+      pool[i].cell[2] = pool.length;
+    });
+    staged.forEach(s=>{ cells.get(s.id)[mi] = s.cell; });
+  });
+
+  const slugs = entries.map(e=>e.slug);
+  const builtAt = entries.map(e=>e.built_at || "").sort().pop();
+  const entry = {
+    kind: "combined", slug: slugs.join("+"), slugs, includesTournament,
+    name: entries.map(e=>e.name).join(" + "), label: selectionLabel(slugs),
+    seasonCount: entries.filter(e=>!isTournament(e)).length,
+    tournamentCount: entries.filter(isTournament).length,
+    start: entries.map(e=>e.start).sort()[0], end: entries.map(e=>e.end).sort().pop(),
+    final: entries.every(e=>e.final), built_at: builtAt, players: people.length,
+  };
+  const view = makeSeason(entry, {metrics: METRICS.map(m=>m.k), fields: FIELDS,
+                                  players: people.map(a=>[a.id, a.name, cells.get(a.id)])});
+  entry.qualified = view.players.filter(p=>(view.cell(p, GAMES)||{}).ok).length;
+  return view;
+}
+
+/* One slug: that season as built. Several: their combination, computed once. */
+const combos = {};
+function loadSelection(slugs){
+  const ordered = orderSlugs(slugs);
+  if(!ordered.length) return Promise.reject(new Error("Nothing selected."));
+  if(ordered.length === 1) return loadSeason(ordered[0]);
+  const key = ordered.join("+");
+  if(!combos[key]) combos[key] = Promise.all(ordered.map(loadSeason)).then(views=>{
+    const broken = views.find(v=>v.missing.length);
+    if(broken) throw new Error(`${broken.entry.name} is missing ${broken.missing.join(", ")}.`);
+    return combine(views);
+  }).catch(err=>{ delete combos[key]; throw err; });
+  return combos[key];
+}
+
+/* ---- season / tournament picker ----
+   A button that opens a checkbox list. Clicking a name shows just that one;
+   ticking boxes combines several. At least one always stays selected. */
+let pickerCount = 0;
+function seasonPicker(host, {selected, onChange, buttonId}){
+  const uid = "pk" + (++pickerCount);
+  let current = orderSlugs(selected);
+  const meta = s => (s.final ? "" : "in progress · ") +
+    (isTournament(s) ? `${s.players} players` : `${s.qualified} qualified`);
+  const groups = [["Stars Off seasons", s=>!isTournament(s)], ["Netplay Superstars tournaments", isTournament]]
+    .map(([title, keep])=>{
+      const list = seasons.filter(keep);
+      return list.length ? `<div class="picker-group-title">${esc(title)}</div>` + list.map(s=>`
+        <div class="picker-row">
+          <input type="checkbox" id="${uid}-${esc(s.slug)}" value="${esc(s.slug)}" aria-label="${esc(s.name)}">
+          <button type="button" class="picker-name" data-slug="${esc(s.slug)}"
+                  title="Show only ${esc(s.name)}">${esc(s.name)}</button>
+          <span class="picker-meta">${esc(meta(s))}</span>
+        </div>`).join("") : "";
+    }).join("");
+  host.classList.add("picker");
+  host.innerHTML = `
+    <button type="button" class="picker-btn" ${buttonId ? `id="${esc(buttonId)}"` : ""} aria-expanded="false">
+      <span class="picker-label"></span><span class="picker-caret" aria-hidden="true">&#9662;</span>
+    </button>
+    <div class="picker-panel" hidden>
+      <p class="picker-hint">Click a name to show just that one, or tick boxes to combine several.</p>
+      ${groups}
+    </div>`;
+  const btn = host.querySelector(".picker-btn"), panel = host.querySelector(".picker-panel"),
+        hint = host.querySelector(".picker-hint"), label = host.querySelector(".picker-label");
+
+  const sync = ()=>{
+    host.querySelectorAll("input[type=checkbox]").forEach(cb=>{ cb.checked = current.includes(cb.value); });
+    label.textContent = selectionLabel(current);
+    btn.title = current.map(sl=>bySlug[sl].name).join(", ");
+  };
+  const emit = ()=>{ sync(); onChange(current.slice()); };
+  const open = ()=>{
+    panel.hidden = false;
+    btn.setAttribute("aria-expanded", "true");
+    panel.style.left = ""; panel.style.right = "";
+    if(panel.getBoundingClientRect().right > window.innerWidth - 8){ panel.style.left = "auto"; panel.style.right = "0"; }
+    const first = host.querySelector("input:checked");
+    if(first){ first.closest(".picker-row").scrollIntoView({block: "nearest"}); first.focus({preventScroll: true}); }
+  };
+  const HINT = hint.textContent;
+  const close = (focusButton)=>{
+    if(panel.hidden) return;
+    panel.hidden = true;
+    btn.setAttribute("aria-expanded", "false");
+    hint.textContent = HINT;
+    hint.classList.remove("picker-warn");
+    if(focusButton) btn.focus();
+  };
+
+  btn.addEventListener("click", ()=> panel.hidden ? open() : close());
+  panel.addEventListener("change", e=>{
+    const cb = e.target;
+    if(cb.type !== "checkbox") return;
+    if(!cb.checked && current.length === 1){
+      cb.checked = true;
+      hint.textContent = "At least one season or tournament has to stay selected.";
+      hint.classList.add("picker-warn");
+      return;
+    }
+    current = cb.checked ? orderSlugs([...current, cb.value]) : current.filter(sl=>sl !== cb.value);
+    emit();
+  });
+  panel.addEventListener("click", e=>{
+    const name = e.target.closest(".picker-name");
+    if(!name) return;
+    current = [name.dataset.slug];
+    emit();
+    close(true);
+  });
+  document.addEventListener("pointerdown", e=>{ if(!host.contains(e.target)) close(); });
+  host.addEventListener("keydown", e=>{ if(e.key === "Escape"){ e.stopPropagation(); close(true); } });
+
+  sync();
+  return {get: ()=>current.slice(), set: slugs=>{ current = orderSlugs(slugs); sync(); }, close};
+}
+
 /* ---- metric definitions dialog ---- */
 function definitionsHTML(){
   const minGames = (rules.bat_barrel_pct || [])[1] ?? 10;
@@ -230,6 +419,11 @@ function definitionsHTML(){
       Every player who played is ranked on every metric they have data for, including the extra
       minimums listed below. Tournament fields are small and the competition is strong, so a player
       with only a few games, swings or at-bats can land at either extreme.</p>
+    <p class="defs-note defs-tournament"><b>Several seasons or tournaments selected at once</b> rank
+      players on their combined totals across the selection. Minimums apply to those totals (10 games
+      across the selection, and so on) unless the selection includes a tournament, in which case there
+      are none. ELO isn't shown for a multiple selection, because a rating belongs to one season or
+      tournament.</p>
     ${sections}
   </div>`;
 }
@@ -274,5 +468,7 @@ setupThemeToggle();
 
 return {METRICS, GROUPS, GCOLOR, DEFINITIONS, seasons, bySlug, rules,
         fmt, counts, menuLabel, esc, badge, updatedLabel, whyNot, loadSeason, openDefinitions,
-        isTournament, TOURNAMENT_NOTE, latestSeason, fillSeasonSelect};
+        isTournament, TOURNAMENT_NOTE, latestSeason,
+        isCombined, noMinimums, ELO_NOTE, orderSlugs, selectionKey, selectionLabel,
+        loadSelection, seasonPicker, _combine: combine, _percentileRanks: percentileRanks};
 })();

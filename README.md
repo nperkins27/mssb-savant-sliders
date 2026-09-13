@@ -8,7 +8,7 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 | Path | What it is |
 |---|---|
 | `site/index.html` | Leaderboard page: one season, ranked by a chosen metric, with one player's sliders |
-| `site/compare.html` | Compare page: 2 to 12 season + player cards, reorderable by drag. The comparison is kept in the URL (`#c=<season>~<user id>,...`) |
+| `site/compare.html` | Compare page: 2 to 12 season + player cards, reorderable by drag. The comparison is kept in the URL (`#c=<season>[+<season>...]~<user id>,...`) |
 | `site/shared.js` | Used by both pages: the metric list, the **metric definitions text** (`DEFINITIONS`), season loading and the definitions dialog |
 | `site/shared.css` | Styles used by both pages |
 | `site/data/manifest.js` / `.json` | List of seasons: dates, final or in progress, when each was built |
@@ -46,6 +46,18 @@ game is ranked on every metric they have data for. This is a site choice; Rio's
 `season_metric` table covers seasons only. `build_seasons.py` ranks them with
 Rio's own `build_rows()`, switching the floors off only while a tournament is
 built, and the pages say "no minimums" wherever a tournament is shown.
+
+### Multiple selections
+
+Both pages can select several seasons and/or tournaments at once. `shared.js`
+then combines them in the browser: each player's numerators, denominators and
+games are summed across the selection, every rate is recomputed from the totals,
+and players are ranked with a JavaScript port of Rio's `qualifies()` and
+`percentile_ranks()`. Season minimums apply to the combined totals; a selection
+that includes a tournament has none. ELO has no combined value and shows n/a.
+Nothing is precomputed for combinations, so the build and data files are
+unchanged. Combining a single season reproduces its built file exactly, and
+combinations match `build_rows()` run on the same summed counts in Python.
 
 ## How the refresh works
 

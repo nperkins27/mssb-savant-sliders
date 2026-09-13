@@ -31,6 +31,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   .card-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:12px}
   .card-controls label{display:block;min-width:0;font-size:11px;color:var(--muted);text-transform:uppercase;
                        letter-spacing:.7px}
+  .c-field{min-width:0}
+  .card .picker-btn{margin-top:5px;padding:6px 8px;font-size:13.5px}
   .card-controls select{display:block;width:100%;margin-top:5px;background:var(--surface);color:var(--ink);
                         border:1px solid var(--line);padding:6px 8px;font-size:13.5px;
                         font-family:var(--sans);text-transform:none;letter-spacing:0}
@@ -96,6 +98,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   measured against different players, so compare the raw values too.
   <b>Netplay Superstars tournaments have no minimums</b>: every player who played is ranked on every
   metric they have data for, so small tournament samples can produce extreme percentiles.
+  <b>Tick several</b> seasons or tournaments on a card to rank that player on their combined totals;
+  minimums apply to the totals unless a tournament is included, and ELO isn&rsquo;t shown.
   Metric definitions follow Project Rio&rsquo;s season metrics. Data: Rio netplay database.
 </footer>
 </div>
@@ -114,42 +118,44 @@ const GRIP = `<svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"
 const cards = ()=>[...grid.querySelectorAll(".card")];
 const announce = msg=>{ document.getElementById("live").textContent = msg; };
 
-/* ---- the comparison lives in the URL: #c=<season>~<user id>,... ---- */
+/* ---- the comparison lives in the URL: #c=<season>[+<season>...]~<user id>,... ---- */
 function readHash(){
   const m = location.hash.match(/^#c=([^&]*)/);
   if(!m) return [];
   return decodeURIComponent(m[1]).split(",").slice(0, MAX_CARDS).map(part=>{
-    const [slug, id] = part.split("~");
-    return {slug, userId: /^\d+$/.test(id || "") ? +id : null};
-  }).filter(spec=>MSSB.bySlug[spec.slug]);
+    const [slugPart, id] = part.split("~");
+    return {slugs: MSSB.orderSlugs((slugPart || "").split("+")), userId: /^\d+$/.test(id || "") ? +id : null};
+  }).filter(spec=>spec.slugs.length);
 }
 function writeHash(){
-  const specs = cards().map(el=>`${el._st.slug}~${el._st.userId ?? ""}`);
+  const specs = cards().map(el=>`${MSSB.selectionKey(el._st.slugs)}~${el._st.userId ?? ""}`);
   history.replaceState(null, "", "#c=" + specs.join(","));
 }
 
 /* ---- cards ---- */
+let cardSeq = 0;
 function addCard(spec){
   const el = document.createElement("section");
+  const pickerId = "card-season-" + (++cardSeq);
   el.className = "card panel";
-  el._st = {slug: spec.slug, userId: spec.userId, season: null};
+  el._st = {slugs: spec.slugs, userId: spec.userId, season: null};
   el.innerHTML = `
     <div class="card-head">
       <button type="button" class="grip" aria-label="Move card: drag it, or use the arrow keys">${GRIP}<span>Drag</span></button>
       <button type="button" class="card-remove" aria-label="Remove this card">&times;</button>
     </div>
     <div class="card-controls">
-      <label>Season / Tournament<select class="c-season"></select></label>
+      <div class="c-field"><label for="${pickerId}">Season / Tournament</label><div class="c-season"></div></div>
       <label>Player<select class="c-player"></select></label>
     </div>
     <div class="c-title">&nbsp;</div>
     <div class="c-meta"></div>
     <div class="c-body"></div>`;
 
-  const ss = el.querySelector(".c-season");
-  MSSB.fillSeasonSelect(ss, s=>s.slug, s=>s.name + (s.final ? "" : " (in progress)"));
-  ss.value = spec.slug;
-  ss.onchange = ()=>{ el._st.slug = ss.value; loadCard(el); };
+  MSSB.seasonPicker(el.querySelector(".c-season"), {
+    selected: spec.slugs, buttonId: pickerId,
+    onChange: slugs=>{ el._st.slugs = slugs; loadCard(el); },
+  });
   el.querySelector(".c-player").onchange = e=>{
     el._st.userId = +e.target.value; renderCard(el); writeHash();
   };
@@ -165,10 +171,10 @@ function addCard(spec){
 }
 
 function loadCard(el){
-  const slug = el._st.slug;
+  const key = MSSB.selectionKey(el._st.slugs), sameKey = ()=>MSSB.selectionKey(el._st.slugs) === key;
   el.querySelector(".c-body").innerHTML = `<p class="sub">Loading&hellip;</p>`;
-  MSSB.loadSeason(slug).then(season=>{
-    if(el._st.slug !== slug || !el.isConnected) return;   /* changed or removed meanwhile */
+  MSSB.loadSelection(el._st.slugs).then(season=>{
+    if(!sameKey() || !el.isConnected) return;   /* changed or removed meanwhile */
     el._st.season = season;
     const ps = el.querySelector(".c-player");
     ps.innerHTML = "";
@@ -183,7 +189,7 @@ function loadCard(el){
     renderCard(el);
     writeHash();
   }, err=>{
-    if(el._st.slug !== slug) return;
+    if(!sameKey()) return;
     el._st.season = null;
     el.querySelector(".c-player").innerHTML = "";
     el.querySelector(".c-title").innerHTML = "&nbsp;";
@@ -192,10 +198,14 @@ function loadCard(el){
   });
 }
 
-/* The best ELO player in the season who isn't already on another card. */
+/* The best ELO player in the selection who isn't already on another card with the
+   same selection (most games, for a multiple selection, which has no ELO). */
 function pickDefault(season, el){
-  const taken = new Set(cards().filter(c=>c!==el && c._st.slug===season.entry.slug).map(c=>c._st.userId));
+  const key = season.entry.slug;
+  const taken = new Set(cards().filter(c=>c!==el && MSSB.selectionKey(c._st.slugs)===key).map(c=>c._st.userId));
+  const games = METRICS.find(m=>m.k==="gen_games_played");
   const pick = season.board(METRICS[0]).find(p=>!taken.has(p.id))
+    || season.board(games).find(p=>!taken.has(p.id))
     || season.players.find(p=>!taken.has(p.id)) || season.players[0];
   return pick ? pick.id : null;
 }
@@ -219,12 +229,17 @@ function renderCard(el){
   }
   const games = season.games(p), minGames = (MSSB.rules.gen_games_played || [])[1];
   title.textContent = p.name;
-  const tournament = MSSB.isTournament(s);
-  meta.innerHTML = `${esc(s.name)}${MSSB.badge(s)} &middot; ${games} game${games===1 ? "" : "s"}` +
-    (tournament
-      ? ` &middot; <span class="floor-note" title="${esc(MSSB.TOURNAMENT_NOTE)}">tournament, no minimums</span>`
-      : minGames != null && games < minGames
-        ? ` &middot; <span class="floor-note">below the ${minGames}-game floor</span>` : "");
+  const tournament = MSSB.isTournament(s), combined = MSSB.isCombined(s);
+  const note = combined
+    ? `<span class="floor-note" title="${esc(s.name + ". Ranked on combined totals. " + MSSB.ELO_NOTE)}">combined${
+        s.includesTournament ? ", no minimums" : minGames != null && games < minGames ? `, below the ${minGames}-game floor` : ""
+      }</span>`
+    : tournament
+      ? `<span class="floor-note" title="${esc(MSSB.TOURNAMENT_NOTE)}">tournament, no minimums</span>`
+      : minGames != null && games < minGames ? `<span class="floor-note">below the ${minGames}-game floor</span>` : "";
+  meta.innerHTML = `<span title="${esc(s.name)}">${esc(combined ? s.label : s.name)}</span>` +
+    (combined ? "" : MSSB.badge(s)) + ` &middot; ${games} game${games===1 ? "" : "s"}` +
+    (note ? ` &middot; ${note}` : "");
   body.innerHTML = GROUPS.map(([gk, gl])=>
     (gl ? `<div class="grp">${gl}</div>` : "") +
     METRICS.filter(m=>m.g===gk).map(m=>rowHTML(season, p, m, games)).join("")
@@ -259,7 +274,7 @@ function refreshChrome(){
 document.getElementById("add").onclick = ()=>{
   if(cards().length >= MAX_CARDS) return;
   const last = cards().at(-1);
-  const el = addCard({slug: last ? last._st.slug : MSSB.latestSeason().slug, userId: null});
+  const el = addCard({slugs: last ? last._st.slugs.slice() : [MSSB.latestSeason().slug], userId: null});
   el.scrollIntoView({behavior: "smooth", block: "nearest"});
   announce(`Card ${cards().length} added.`);
 };
@@ -287,7 +302,7 @@ let drag = null;
 grid.addEventListener("pointerdown", e=>{
   if(e.button !== 0 || drag) return;
   const card = e.target.closest(".card");
-  if(!card || e.target.closest("select, .card-remove")) return;
+  if(!card || e.target.closest("select, .card-remove, .picker")) return;
   /* Touch and pen start a drag only from the handle, so the page still scrolls. */
   if(e.pointerType !== "mouse" && !e.target.closest(".grip")) return;
   if(e.pointerType === "mouse") e.preventDefault();
@@ -370,7 +385,7 @@ function init(){
     return;
   }
   const specs = readHash();
-  while(specs.length < MIN_CARDS) specs.push({slug: MSSB.latestSeason().slug, userId: null});
+  while(specs.length < MIN_CARDS) specs.push({slugs: [MSSB.latestSeason().slug], userId: null});
   specs.forEach(addCard);
 }
 init();
