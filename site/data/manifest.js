@@ -166,13 +166,13 @@ window.MSSB_MANIFEST = {
    "final": false,
    "players": 95,
    "qualified": 24,
-   "built_at": "2026-09-13T01:06:39+00:00",
+   "built_at": "2026-09-13T01:09:05+00:00",
    "file": "seasons/s15superstarsoff.js",
    "definitions_sha256": "92bc47b76a53d0f3619345ba30c3aa994aaffed472e53031010e93b64fbe51b5"
   }
  ],
- "updated_at": "2026-09-13T01:06:39+00:00",
- "checked_at": "2026-09-13T01:06:39+00:00",
+ "updated_at": "2026-09-13T01:09:05+00:00",
+ "checked_at": "2026-09-13T01:09:05+00:00",
  "metric_rules": {
   "bat_barrel_pct": [
    true,
