@@ -165,13 +165,13 @@
    "final": false,
    "players": 95,
    "qualified": 24,
-   "built_at": "2026-09-13T03:12:28+00:00",
+   "built_at": "2026-09-13T03:16:39+00:00",
    "file": "seasons/s15superstarsoff.js",
    "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
   }
  ],
- "updated_at": "2026-09-13T03:12:28+00:00",
- "checked_at": "2026-09-13T03:12:29+00:00",
+ "updated_at": "2026-09-13T03:16:39+00:00",
+ "checked_at": "2026-09-13T03:16:39+00:00",
  "metric_rules": {
   "bat_barrel_pct": [
    true,
