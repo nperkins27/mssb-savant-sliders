@@ -12,7 +12,8 @@ window.MSSB_MANIFEST = {
    "qualified": 18,
    "built_at": "2026-09-13T03:00:19+00:00",
    "file": "seasons/starsoffseason4.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
   },
   {
    "slug": "starsoffseason5",
@@ -25,7 +26,8 @@ window.MSSB_MANIFEST = {
    "qualified": 79,
    "built_at": "2026-09-13T03:01:29+00:00",
    "file": "seasons/starsoffseason5.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
   },
   {
    "slug": "starsoffseason6",
@@ -38,7 +40,8 @@ window.MSSB_MANIFEST = {
    "qualified": 68,
    "built_at": "2026-09-13T03:02:44+00:00",
    "file": "seasons/starsoffseason6.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
   },
   {
    "slug": "starsoffseason7",
@@ -51,7 +54,22 @@ window.MSSB_MANIFEST = {
    "qualified": 65,
    "built_at": "2026-09-13T03:03:44+00:00",
    "file": "seasons/starsoffseason7.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
+  },
+  {
+   "slug": "netplaysuperstars16",
+   "name": "Netplay Superstars 16",
+   "kind": "tournament",
+   "tag_set_id": 63,
+   "start": "2024-02-03",
+   "end": "2024-02-11",
+   "final": true,
+   "players": 40,
+   "qualified": 40,
+   "built_at": "2026-09-13T04:47:16+00:00",
+   "file": "seasons/netplaysuperstars16.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
   },
   {
    "slug": "starsoffseason8",
@@ -64,7 +82,22 @@ window.MSSB_MANIFEST = {
    "qualified": 106,
    "built_at": "2026-09-13T03:04:50+00:00",
    "file": "seasons/starsoffseason8.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
+  },
+  {
+   "slug": "npss17",
+   "name": "NPSS17",
+   "kind": "tournament",
+   "tag_set_id": 71,
+   "start": "2024-04-11",
+   "end": "2024-04-22",
+   "final": true,
+   "players": 38,
+   "qualified": 38,
+   "built_at": "2026-09-13T04:47:17+00:00",
+   "file": "seasons/npss17.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
   },
   {
    "slug": "s9superstarsoff",
@@ -77,7 +110,36 @@ window.MSSB_MANIFEST = {
    "qualified": 125,
    "built_at": "2026-09-13T03:06:07+00:00",
    "file": "seasons/s9superstarsoff.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
+  },
+  {
+   "slug": "npss18",
+   "name": "NPSS18",
+   "kind": "tournament",
+   "tag_set_id": 88,
+   "start": "2024-06-14",
+   "end": "2024-06-23",
+   "final": true,
+   "players": 37,
+   "qualified": 37,
+   "built_at": "2026-09-13T04:47:19+00:00",
+   "file": "seasons/npss18.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+  },
+  {
+   "slug": "netplaysuperstars19",
+   "name": "Netplay Superstars 19",
+   "kind": "tournament",
+   "tag_set_id": 91,
+   "start": "2024-08-02",
+   "end": "2024-08-12",
+   "final": true,
+   "players": 34,
+   "qualified": 34,
+   "built_at": "2026-09-13T04:47:20+00:00",
+   "file": "seasons/netplaysuperstars19.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
   },
   {
    "slug": "s10superstarsoff",
@@ -90,7 +152,22 @@ window.MSSB_MANIFEST = {
    "qualified": 95,
    "built_at": "2026-09-13T03:07:19+00:00",
    "file": "seasons/s10superstarsoff.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
+  },
+  {
+   "slug": "netplaysuperstars20",
+   "name": "Netplay Superstars 20",
+   "kind": "tournament",
+   "tag_set_id": 100,
+   "start": "2024-10-10",
+   "end": "2024-10-20",
+   "final": true,
+   "players": 35,
+   "qualified": 35,
+   "built_at": "2026-09-13T04:47:21+00:00",
+   "file": "seasons/netplaysuperstars20.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
   },
   {
    "slug": "s11superstarsoff",
@@ -103,7 +180,50 @@ window.MSSB_MANIFEST = {
    "qualified": 112,
    "built_at": "2026-09-13T03:08:28+00:00",
    "file": "seasons/s11superstarsoff.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
+  },
+  {
+   "slug": "netplaysuperstars21",
+   "name": "Netplay Superstars 21",
+   "kind": "tournament",
+   "tag_set_id": 116,
+   "start": "2025-01-23",
+   "end": "2025-02-02",
+   "final": true,
+   "players": 46,
+   "qualified": 46,
+   "built_at": "2026-09-13T04:47:23+00:00",
+   "file": "seasons/netplaysuperstars21.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+  },
+  {
+   "slug": "netplaysuperstars22",
+   "name": "Netplay Superstars 22",
+   "kind": "tournament",
+   "tag_set_id": 122,
+   "start": "2025-03-20",
+   "end": "2025-03-30",
+   "final": true,
+   "players": 35,
+   "qualified": 35,
+   "built_at": "2026-09-13T04:47:24+00:00",
+   "file": "seasons/netplaysuperstars22.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+  },
+  {
+   "slug": "netplaysuperstars23",
+   "name": "Netplay Superstars 23",
+   "kind": "tournament",
+   "tag_set_id": 129,
+   "start": "2025-05-15",
+   "end": "2025-05-25",
+   "final": true,
+   "players": 36,
+   "qualified": 36,
+   "built_at": "2026-09-13T04:47:25+00:00",
+   "file": "seasons/netplaysuperstars23.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
   },
   {
    "slug": "s12superstarsoff",
@@ -116,7 +236,36 @@ window.MSSB_MANIFEST = {
    "qualified": 124,
    "built_at": "2026-09-13T03:09:37+00:00",
    "file": "seasons/s12superstarsoff.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
+  },
+  {
+   "slug": "netplaysuperstars24",
+   "name": "Netplay Superstars 24",
+   "kind": "tournament",
+   "tag_set_id": 147,
+   "start": "2025-07-24",
+   "end": "2025-08-05",
+   "final": true,
+   "players": 32,
+   "qualified": 32,
+   "built_at": "2026-09-13T04:47:26+00:00",
+   "file": "seasons/netplaysuperstars24.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
+  },
+  {
+   "slug": "netplaysuperstars25",
+   "name": "Netplay Superstars 25",
+   "kind": "tournament",
+   "tag_set_id": 157,
+   "start": "2025-09-25",
+   "end": "2025-10-06",
+   "final": true,
+   "players": 41,
+   "qualified": 41,
+   "built_at": "2026-09-13T04:47:27+00:00",
+   "file": "seasons/netplaysuperstars25.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
   },
   {
    "slug": "interimsuperstarsoff",
@@ -129,7 +278,8 @@ window.MSSB_MANIFEST = {
    "qualified": 25,
    "built_at": "2026-09-13T03:09:43+00:00",
    "file": "seasons/interimsuperstarsoff.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
   },
   {
    "slug": "s13superstarsoff",
@@ -142,7 +292,22 @@ window.MSSB_MANIFEST = {
    "qualified": 56,
    "built_at": "2026-09-13T03:11:37+00:00",
    "file": "seasons/s13superstarsoff.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
+  },
+  {
+   "slug": "netplaysuperstars26",
+   "name": "Netplay Superstars 26",
+   "kind": "tournament",
+   "tag_set_id": 184,
+   "start": "2026-01-21",
+   "end": "2026-02-02",
+   "final": true,
+   "players": 35,
+   "qualified": 35,
+   "built_at": "2026-09-13T04:47:28+00:00",
+   "file": "seasons/netplaysuperstars26.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
   },
   {
    "slug": "s14superstarsoff",
@@ -155,24 +320,54 @@ window.MSSB_MANIFEST = {
    "qualified": 98,
    "built_at": "2026-09-13T02:59:27+00:00",
    "file": "seasons/s14superstarsoff.js",
-   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+   "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510",
+   "kind": "season"
+  },
+  {
+   "slug": "netplaysuperstars27",
+   "name": "Netplay Superstars 27",
+   "kind": "tournament",
+   "tag_set_id": 207,
+   "start": "2026-05-11",
+   "end": "2026-05-25",
+   "final": true,
+   "players": 26,
+   "qualified": 26,
+   "built_at": "2026-09-13T04:47:29+00:00",
+   "file": "seasons/netplaysuperstars27.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
   },
   {
    "slug": "s15superstarsoff",
    "name": "S15 Superstars Off",
+   "kind": "season",
    "tag_set_id": 223,
    "start": "2026-08-16",
    "end": "2026-12-15",
    "final": false,
-   "players": 95,
+   "players": 96,
    "qualified": 24,
-   "built_at": "2026-09-13T03:16:39+00:00",
+   "built_at": "2026-09-13T04:47:33+00:00",
    "file": "seasons/s15superstarsoff.js",
    "definitions_sha256": "586ac07d62e9f1c781f784c9862e7341bc579e2caacc00c7474d2b2a16fc5510"
+  },
+  {
+   "slug": "netplaysuperstars28",
+   "name": "Netplay Superstars 28",
+   "kind": "tournament",
+   "tag_set_id": 228,
+   "start": "2026-08-20",
+   "end": "2026-08-31",
+   "final": true,
+   "players": 31,
+   "qualified": 31,
+   "built_at": "2026-09-13T04:47:34+00:00",
+   "file": "seasons/netplaysuperstars28.js",
+   "definitions_sha256": "ea635c66cc69516fc78e38e76fed5ed7242b34505121d3e28a54e65983e96ce8"
   }
  ],
- "updated_at": "2026-09-13T03:16:39+00:00",
- "checked_at": "2026-09-13T03:16:39+00:00",
+ "updated_at": "2026-09-13T04:47:34+00:00",
+ "checked_at": "2026-09-13T04:47:34+00:00",
  "metric_rules": {
   "bat_barrel_pct": [
    true,

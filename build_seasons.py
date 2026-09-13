@@ -9,6 +9,10 @@ Run it any time -- it only does the work that is still due.
     matches what the season_metric table holds.
   * Seasons are discovered with Rio's own rule: main-line Stars Off tag sets
     from Season 4 on, plus S9, which is typed League.
+  * Netplay Superstars tournaments ("Netplay Superstars 28", "NPSS17") are
+    built the same way but with NO qualification floors: every player who
+    played is ranked on every metric they have data for. This is a site
+    choice; Rio's season_metric table covers seasons only.
   * A season that has started and is not final gets rebuilt. It becomes final
     on the first build that runs more than GRACE_DAYS after its end_date, and
     is never queried again after that.
@@ -30,6 +34,7 @@ Usage:
 Requires: pip install -r requirements.txt
 """
 import argparse
+from contextlib import contextmanager, nullcontext
 import datetime as dt
 import hashlib
 import json
@@ -60,11 +65,24 @@ DATA_FORMAT = 2
 FIELDS = ("value", "percentile", "pool_size", "numerator", "denominator", "qualified")
 
 SEASONS_SQL = """
-select id, name, name_lowercase, start_date, end_date
+select id, name, name_lowercase, start_date, end_date, 'season' as kind
 from tag_set
 where id in (""" + q.SEASON_DISCOVERY_SQL + """)
-order by start_date
 """
+
+# Netplay Superstars tournaments. name_lowercase strips punctuation, and both
+# naming styles are in use ("Netplay Superstars 16", "NPSS17"). Anchored so a
+# "Practice: ..." or variant tag set never matches.
+TOURNAMENTS_SQL = """
+select id, name, name_lowercase, start_date, end_date, 'tournament' as kind
+from tag_set
+where type = 'Tournament'
+  and (name_lowercase ~ '^netplaysuperstars[0-9]+$' or name_lowercase ~ '^npss[0-9]+$')
+"""
+
+# Part of a tournament's fingerprint, so changing how tournaments are ranked
+# rebuilds them the same way a definition change rebuilds everything.
+TOURNAMENT_RULES = "no floors v1"
 
 # Stars-off tag sets that look like a season but were not discovered --
 # printed when the gap alert fires, to show what the new season is called.
@@ -169,23 +187,44 @@ def redact(message: str, params: dict) -> str:
 # metrics
 # --------------------------------------------------------------------------
 
-def definitions_fingerprint() -> str:
+def definitions_fingerprint(kind: str = "season") -> str:
     # Line endings normalised: a Windows checkout (CRLF) and the Linux runner
     # (LF) must agree, or every season would look stale on the first CI run.
     h = hashlib.sha256(f"data format {DATA_FORMAT}\n".encode("utf-8"))
     for name in DEFINITION_FILES:
         h.update((HERE / name).read_text(encoding="utf-8").replace("\r\n", "\n").encode("utf-8"))
+    if kind == "tournament":
+        h.update(TOURNAMENT_RULES.encode("utf-8"))
     return h.hexdigest()
 
 
 def discover(conn) -> list[dict]:
+    """Seasons and tournaments together, oldest first, each tagged with its kind."""
+    found = []
     with conn.cursor() as cur:
-        cur.execute(SEASONS_SQL, {"exceptions": list(q.SEASON_ID_EXCEPTIONS)})
-        names = [d[0] for d in cur.description]
-        seasons = [dict(zip(names, r)) for r in cur.fetchall()]
-    if not seasons:
+        for sql, params in ((SEASONS_SQL, {"exceptions": list(q.SEASON_ID_EXCEPTIONS)}),
+                            (TOURNAMENTS_SQL, None)):
+            cur.execute(sql, params)
+            names = [d[0] for d in cur.description]
+            found += [dict(zip(names, r)) for r in cur.fetchall()]
+    if not any(s["kind"] == "season" for s in found):
         raise SystemExit("ERROR: no seasons discovered")
-    return seasons
+    return sorted(found, key=lambda s: (s["start_date"], s["name"]))
+
+
+@contextmanager
+def without_floors():
+    """Rank tournaments with no qualification floors, using Rio's own
+    build_rows() unchanged: for the duration, every metric's rule keeps its
+    direction but loses its games and denominator minimums. qualifies() still
+    rejects a metric with no data (an empty denominator)."""
+    saved = dict(sm.cMETRIC_RULES)
+    sm.cMETRIC_RULES.update({m: (rule[0], None, None) for m, rule in saved.items()})
+    try:
+        yield
+    finally:
+        sm.cMETRIC_RULES.clear()
+        sm.cMETRIC_RULES.update(saved)
 
 
 def collect(conn, tag_set_id: int) -> dict:
@@ -234,12 +273,19 @@ def collect(conn, tag_set_id: int) -> dict:
     return per_user
 
 
-def season_payload(conn, per_user: dict) -> tuple[dict, int]:
+def season_payload(conn, per_user: dict, floors: bool = True) -> tuple[dict, int]:
     """build_rows() output reshaped for the page: one entry per player holding
-    every metric. Returns (payload, players who met the games floor)."""
+    every metric. Returns (payload, players who met the games floor).
+
+    floors=False is tournament mode: no minimums, and only players who
+    actually played a game in it are listed."""
+    if not floors:
+        per_user = {uid: rec for uid, rec in per_user.items() if rec["games"] > 0}
     slot = {m: i for i, m in enumerate(sm.cSEASON_METRICS)}
     by_user = {uid: [None] * len(slot) for uid in per_user}
-    for r in sm.build_rows(per_user):
+    with (nullcontext() if floors else without_floors()):
+        rows = sm.build_rows(per_user)
+    for r in rows:
         by_user[r["user_id"]][slot[r["metric"]]] = [
             round(r[f], 6) if isinstance(r[f], float) else r[f] for f in FIELDS]
 
@@ -392,7 +438,7 @@ def main() -> None:
         emit(ran="false")
         return
 
-    fingerprint = definitions_fingerprint()
+    fingerprints = {kind: definitions_fingerprint(kind) for kind in ("season", "tournament")}
     params = db_params(args.guide)
 
     import psycopg
@@ -417,10 +463,10 @@ def main() -> None:
             if args.season and slug not in args.season:
                 action, reason = "skip", "not selected"
             else:
-                action, reason = plan_season(s, prev_by_slug.get(slug), fingerprint, now,
+                action, reason = plan_season(s, prev_by_slug.get(slug), fingerprints[s["kind"]], now,
                                              bool(args.season), out_dir)
             plan.append((s, action))
-            print(f"  {s['name']:28} {action:5}  {reason}")
+            print(f"  {s['name']:28} {s['kind']:10} {action:5}  {reason}")
         vanished = set(prev_by_slug) - known
         for slug in sorted(vanished):
             print(f"  WARNING: {slug} is in the manifest but no longer discovered; "
@@ -439,17 +485,22 @@ def main() -> None:
 
         manifest["metric_rules"] = {m: list(rule) for m, rule in sm.cMETRIC_RULES.items()}
         current = dict(prev_by_slug)
+        for s in discovered:   # entries kept as-is still carry their kind
+            if s["name_lowercase"] in current:
+                current[s["name_lowercase"]]["kind"] = s["kind"]
         todo = [s for s, action in plan if action == "build"]
         for n, s in enumerate(todo, 1):
             slug = s["name_lowercase"]
             print(f"[{n}/{len(todo)}] {s['name']}  running...", flush=True)
             t0 = time.time()
-            payload, qualified = season_payload(conn, collect(conn, s["id"]))
+            payload, qualified = season_payload(conn, collect(conn, s["id"]),
+                                                floors=s["kind"] == "season")
             built = time.time()
             final = built > s["end_date"] + GRACE_DAYS * 86400
             current[slug] = {
                 "slug": slug,
                 "name": s["name"],
+                "kind": s["kind"],
                 "tag_set_id": s["id"],
                 "start": et_date(s["start_date"]),
                 "end": et_date(s["end_date"]),
@@ -458,7 +509,7 @@ def main() -> None:
                 "qualified": qualified,
                 "built_at": iso_utc(built),
                 "file": write_season(out_dir, slug, payload),
-                "definitions_sha256": fingerprint,
+                "definitions_sha256": fingerprints[s["kind"]],
             }
             # Save after every season, so a long first build that dies midway
             # keeps what it finished.
@@ -468,7 +519,8 @@ def main() -> None:
             print(f"        {len(payload['players'])} players, {qualified} qualified, "
                   f"in {built - t0:.0f}s" + ("  -> final" if final else ""), flush=True)
 
-        alert = season_gap_alert(conn, discovered, now)
+        # The alert is about seasons: a tournament running doesn't mean one is.
+        alert = season_gap_alert(conn, [s for s in discovered if s["kind"] == "season"], now)
 
     manifest["seasons"] = entries(current)
     manifest["checked_at"] = iso_utc(time.time())

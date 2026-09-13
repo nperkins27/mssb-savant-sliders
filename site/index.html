@@ -59,7 +59,7 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
 
 <div class="controls">
   <div>
-    <label for="season">Season</label>
+    <label for="season">Season / Tournament</label>
     <select id="season"></select>
   </div>
   <div>
@@ -74,6 +74,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
     <button type="button" class="btn" id="defs-btn">Metric definitions</button>
   </div>
 </div>
+
+<div class="mode-note" id="mode-note" role="note" hidden></div>
 
 <div class="cols">
   <div class="panel">
@@ -98,6 +100,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   (25 contacted charge swings) and HR&nbsp;% Allowed (50 at-bats faced) add King Boo and Wario.
   ELO uses the community formula, based on a player&rsquo;s latest rating in the season and their
   games and wins.
+  <b>Netplay Superstars tournaments have no minimums</b>: every player who played is ranked on every
+  metric they have data for.
   Completed seasons are final; the current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
   Metric definitions follow Project Rio&rsquo;s season metrics. Data: Rio netplay database.
 </footer>
@@ -128,19 +132,17 @@ function init(){
   ms.value = "gen_adjusted_elo";
 
   const ss = document.getElementById("season");
-  MSSB.seasons.forEach((s,i)=>{
-    const o=document.createElement("option");
-    o.value=String(i);
-    o.textContent = s.name + (s.final ? "" : " (in progress)") + " · " + s.qualified + " qualified";
-    ss.appendChild(o);
-  });
-  ss.value = String(MSSB.seasons.length-1);   /* newest season by default */
+  MSSB.fillSeasonSelect(ss, s=>String(MSSB.seasons.indexOf(s)), s=>
+    s.name + (s.final ? "" : " (in progress)") + " · " +
+    (MSSB.isTournament(s) ? s.players + " players" : s.qualified + " qualified"));
+  const start = MSSB.seasons.indexOf(MSSB.latestSeason());   /* newest season by default */
+  ss.value = String(start);
 
   ms.onchange = renderLB;
   document.getElementById("player").onchange = renderPlayer;
   ss.onchange = ()=>selectSeason(+ss.value);
 
-  selectSeason(MSSB.seasons.length-1);
+  selectSeason(start);
 }
 
 function selectSeason(i){
@@ -175,12 +177,18 @@ function show(season){
         have diverged.</div>`
     : "";
 
+  const tournament = MSSB.isTournament(s);
   document.getElementById("meta").innerHTML =
     `Mario Superstar Baseball &mdash; advanced player percentiles` +
     `<br><b>${esc(s.name)}</b>` + MSSB.badge(s) +
     ` &middot; ${esc(s.start)} to ${esc(s.end)}` +
-    ` &middot; ${s.qualified} qualified players` +
+    (tournament ? ` &middot; ${s.players} players &middot; tournament, no minimums`
+                : ` &middot; ${s.qualified} qualified players`) +
     ` &middot; updated ${esc(MSSB.updatedLabel(s))}`;
+  const note = document.getElementById("mode-note");
+  note.hidden = !tournament;
+  note.innerHTML = tournament
+    ? `<b>Netplay Superstars tournament: no minimums.</b> ${esc(MSSB.TOURNAMENT_NOTE)}` : "";
 
   ps.innerHTML = "";
   season.players.forEach(x=>{   /* already sorted by name */
@@ -200,9 +208,10 @@ function renderLB(){
   if(!S) return;
   const m = METRICS.find(x=>x.k===document.getElementById("metric").value);
   document.getElementById("lb-title").textContent = "Leaderboard — " + menuLabel(m);
-  const ranked = S.board(m);
-  document.getElementById("lb-sub").textContent =
-    `${ranked.length} qualified, ranked by percentile. Click a name to load it.`;
+  const ranked = S.board(m), tournament = MSSB.isTournament(S.entry);
+  document.getElementById("lb-sub").textContent = tournament
+    ? `${ranked.length} players, no minimums, ranked by percentile. Click a name to load it.`
+    : `${ranked.length} qualified, ranked by percentile. Click a name to load it.`;
   const colr = GCOLOR[m.g];
   const el = document.getElementById("lb");
   el.innerHTML = ranked.map((p,i)=>{
@@ -213,8 +222,10 @@ function renderLB(){
       <div class="lb-val">${fmt(m,c.value)}</div>
       <div class="lb-barwrap"><div class="lb-track"><i style="width:${c.pct}%;background:${colr}"></i></div></div>
     </div>`;
-  }).join("") || `<p class="sub">No qualified players yet. Players appear once they reach
-    10 games, usually a few days into a new season.</p>`;
+  }).join("") || (tournament
+    ? `<p class="sub">No player has data for this metric in this tournament.</p>`
+    : `<p class="sub">No qualified players yet. Players appear once they reach
+       10 games, usually a few days into a new season.</p>`);
   el.querySelectorAll(".lb-name").forEach(n=>{
     n.onclick = ()=>{ document.getElementById("player").value=n.dataset.u; renderPlayer(); };
   });
@@ -232,12 +243,12 @@ function renderPlayer(){
       const c = S.cell(p,m) || {}, colr = GCOLOR[gk];
       const n = MSSB.counts(m, c);
       const counts = n ? ` <span title="${esc(n.title)}">&middot; ${esc(n.text)}</span>` : "";
-      const why = c.ok ? "" : `<span class="why">${esc(whyNot(m, c, games))}</span>`;
+      const why = c.ok ? "" : `<span class="why">${esc(whyNot(m, c, games, S.entry))}</span>`;
       const track = `<div class="strack"><i style="width:${c.ok?c.pct:0}%;background:${colr}"></i></div>`;
       const lab = `<div class="slab">${m.label}<span class="raw">${fmt(m,c.value)}${counts}</span>${why}</div>`;
       const box = c.ok
         ? `<div class="sval" title="${c.pct.toFixed(1)}th percentile of ${c.pool} players">${Math.round(c.pct)}</div>`
-        : `<div class="sval na" title="${esc(whyNot(m, c, games))}">n/a</div>`;
+        : `<div class="sval na" title="${esc(whyNot(m, c, games, S.entry))}">n/a</div>`;
       return gk==="general"
         ? `<div class="srow gen"><div class="gstack">${lab}${track}</div>${box}</div>`
         : `<div class="srow">${lab}${track}${box}</div>`;

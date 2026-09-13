@@ -68,7 +68,7 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
       <span>Dark mode</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span>
     </button>
   </div>
-  <p class="meta">Mario Superstar Baseball &mdash; compare players, in the same season or across seasons</p>
+  <p class="meta">Mario Superstar Baseball &mdash; compare players, in the same season or across seasons and tournaments</p>
   <nav class="tabs" aria-label="Pages">
     <a href="index.html">Leaderboard</a>
     <a href="compare.html" aria-current="page">Compare players</a>
@@ -94,6 +94,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   Percentiles are 0&ndash;100 where <b>100 is always best</b>, and each one ranks a player only
   against others <b>in the same season</b>. Across seasons, a 90 in S9 and a 90 in S15 are
   measured against different players, so compare the raw values too.
+  <b>Netplay Superstars tournaments have no minimums</b>: every player who played is ranked on every
+  metric they have data for, so small tournament samples can produce extreme percentiles.
   Metric definitions follow Project Rio&rsquo;s season metrics. Data: Rio netplay database.
 </footer>
 </div>
@@ -137,7 +139,7 @@ function addCard(spec){
       <button type="button" class="card-remove" aria-label="Remove this card">&times;</button>
     </div>
     <div class="card-controls">
-      <label>Season<select class="c-season"></select></label>
+      <label>Season / Tournament<select class="c-season"></select></label>
       <label>Player<select class="c-player"></select></label>
     </div>
     <div class="c-title">&nbsp;</div>
@@ -145,11 +147,7 @@ function addCard(spec){
     <div class="c-body"></div>`;
 
   const ss = el.querySelector(".c-season");
-  MSSB.seasons.forEach(s=>{
-    const o = document.createElement("option");
-    o.value = s.slug; o.textContent = s.name + (s.final ? "" : " (in progress)");
-    ss.appendChild(o);
-  });
+  MSSB.fillSeasonSelect(ss, s=>s.slug, s=>s.name + (s.final ? "" : " (in progress)"));
   ss.value = spec.slug;
   ss.onchange = ()=>{ el._st.slug = ss.value; loadCard(el); };
   el.querySelector(".c-player").onchange = e=>{
@@ -221,9 +219,12 @@ function renderCard(el){
   }
   const games = season.games(p), minGames = (MSSB.rules.gen_games_played || [])[1];
   title.textContent = p.name;
+  const tournament = MSSB.isTournament(s);
   meta.innerHTML = `${esc(s.name)}${MSSB.badge(s)} &middot; ${games} game${games===1 ? "" : "s"}` +
-    (minGames != null && games < minGames
-      ? ` &middot; <span class="floor-note">below the ${minGames}-game floor</span>` : "");
+    (tournament
+      ? ` &middot; <span class="floor-note" title="${esc(MSSB.TOURNAMENT_NOTE)}">tournament, no minimums</span>`
+      : minGames != null && games < minGames
+        ? ` &middot; <span class="floor-note">below the ${minGames}-game floor</span>` : "");
   body.innerHTML = GROUPS.map(([gk, gl])=>
     (gl ? `<div class="grp">${gl}</div>` : "") +
     METRICS.filter(m=>m.g===gk).map(m=>rowHTML(season, p, m, games)).join("")
@@ -234,7 +235,7 @@ function rowHTML(season, p, m, games){
   const c = season.cell(p, m) || {};
   const n = MSSB.counts(m, c);
   const counts = n ? ` · ${n.text}` : "";
-  const why = c.ok ? "" : whyNot(m, c, games);
+  const why = c.ok ? "" : whyNot(m, c, games, season.entry);
   const tip = n ? n.title : `${m.label}: ${fmt(m, c.value)}`;
   const box = c.ok
     ? `<div class="sval" title="${c.pct.toFixed(1)}th percentile of ${c.pool} players in ${esc(season.entry.name)}">${Math.round(c.pct)}</div>`
@@ -258,7 +259,7 @@ function refreshChrome(){
 document.getElementById("add").onclick = ()=>{
   if(cards().length >= MAX_CARDS) return;
   const last = cards().at(-1);
-  const el = addCard({slug: last ? last._st.slug : MSSB.seasons.at(-1).slug, userId: null});
+  const el = addCard({slug: last ? last._st.slug : MSSB.latestSeason().slug, userId: null});
   el.scrollIntoView({behavior: "smooth", block: "nearest"});
   announce(`Card ${cards().length} added.`);
 };
@@ -369,7 +370,7 @@ function init(){
     return;
   }
   const specs = readHash();
-  while(specs.length < MIN_CARDS) specs.push({slug: MSSB.seasons.at(-1).slug, userId: null});
+  while(specs.length < MIN_CARDS) specs.push({slug: MSSB.latestSeason().slug, userId: null});
   specs.forEach(addCard);
 }
 init();

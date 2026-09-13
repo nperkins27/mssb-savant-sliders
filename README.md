@@ -37,6 +37,16 @@ Each season file stores, for every player and metric, the same columns as a
 whether the player qualified. Players who played at least one game are included,
 qualified or not, so anyone can look themselves up.
 
+### Netplay Superstars tournaments
+
+Netplay Superstars tournaments (tag sets typed Tournament named "Netplay
+Superstars NN" or "NPSSNN") are listed alongside the seasons, with the same 17
+metrics but **no qualification minimums**: every player who played at least one
+game is ranked on every metric they have data for. This is a site choice; Rio's
+`season_metric` table covers seasons only. `build_seasons.py` ranks them with
+Rio's own `build_rows()`, switching the floors off only while a tournament is
+built, and the pages say "no minimums" wherever a tournament is shown.
+
 ## How the refresh works
 
 - **Seasons are discovered, not listed**, with Rio's own rule: `tag_set` rows

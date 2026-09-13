@@ -116,8 +116,38 @@ function updatedLabel(s){
     ? new Date(s.built_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"}) : "?";
 }
 
-/* Why a metric shows n/a, from the same floors the build used. */
-function whyNot(m, c, games){
+/* ---- Netplay Superstars tournaments ----
+   Built like seasons but ranked with no minimums (see build_seasons.py). */
+const isTournament = s => !!s && s.kind === "tournament";
+const TOURNAMENT_NOTE =
+  "Every player who played is ranked on every metric, however few games, swings or at-bats, " +
+  "so small samples can produce extreme percentiles.";
+/* The newest Stars Off season, which pages open on (a tournament can be newer). */
+function latestSeason(){
+  return [...seasons].reverse().find(s=>!isTournament(s)) || seasons[seasons.length-1];
+}
+/* Fill a <select> with seasons and tournaments in separate groups, oldest first. */
+function fillSeasonSelect(select, valueOf, labelOf){
+  select.innerHTML = "";
+  [["Stars Off seasons", s=>!isTournament(s)], ["Netplay Superstars tournaments", isTournament]]
+    .forEach(([title, keep])=>{
+      const list = seasons.filter(keep);
+      if(!list.length) return;
+      const group = document.createElement("optgroup");
+      group.label = title;
+      list.forEach(s=>{
+        const o = document.createElement("option");
+        o.value = valueOf(s); o.textContent = labelOf(s);
+        group.appendChild(o);
+      });
+      select.appendChild(group);
+    });
+}
+
+/* Why a metric shows n/a, from the same floors the build used. Tournaments
+   have no floors, so there it only ever means the player has no data. */
+function whyNot(m, c, games, entry){
+  if(isTournament(entry)) return c.value==null ? "no data in this tournament" : "not qualified";
   const r = rules[m.k] || [];
   if(r[1]!=null && (games||0) < r[1]) return `needs ${r[1]} games (has ${games||0})`;
   if(r[2]!=null && (c.den||0) < r[2]) return `needs ${r[2]} ${m.d} (has ${c.den||0})`;
@@ -183,7 +213,7 @@ function definitionsHTML(){
     return `<h3>${esc(title || "General")}</h3><dl>` + defined.map(m=>{
       const r = rules[m.k] || [];
       const rule = (r[0] === false ? "Lower is better." : "Higher is better.") +
-        (r[2]!=null ? ` Also needs ${r[2]} ${esc(m.d)} to qualify.` : "");
+        (r[2]!=null ? ` In seasons, also needs ${r[2]} ${esc(m.d)} to qualify.` : "");
       return `<dt>${esc(m.label)}</dt>
         <dd>${esc(DEFINITIONS[m.k])}<span class="defs-rule">${rule}</span></dd>`;
     }).join("") + `</dl>`;
@@ -193,8 +223,13 @@ function definitionsHTML(){
       <h2 id="defs-title">Metric definitions</h2>
       <button type="button" class="defs-close" aria-label="Close">&times;</button>
     </div>
-    <p class="defs-note">Every metric needs ${minGames} games in the season to qualify.
-      Percentiles rank a player against others in the same season, and 100 is always best.</p>
+    <p class="defs-note">In Stars Off seasons, every metric needs ${minGames} games in the season to
+      qualify. Percentiles rank a player against others in the same season or tournament, and 100 is
+      always best.</p>
+    <p class="defs-note defs-tournament"><b>Netplay Superstars tournaments have no minimums.</b>
+      Every player who played is ranked on every metric they have data for, including the extra
+      minimums listed below. Tournament fields are small and the competition is strong, so a player
+      with only a few games, swings or at-bats can land at either extreme.</p>
     ${sections}
   </div>`;
 }
@@ -238,5 +273,6 @@ function setupThemeToggle(){
 setupThemeToggle();
 
 return {METRICS, GROUPS, GCOLOR, DEFINITIONS, seasons, bySlug, rules,
-        fmt, counts, menuLabel, esc, badge, updatedLabel, whyNot, loadSeason, openDefinitions};
+        fmt, counts, menuLabel, esc, badge, updatedLabel, whyNot, loadSeason, openDefinitions,
+        isTournament, TOURNAMENT_NOTE, latestSeason, fillSeasonSelect};
 })();
