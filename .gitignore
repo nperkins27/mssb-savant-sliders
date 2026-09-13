@@ -1,5 +1,8 @@
 # Production database credentials. Never commit; CI uses repository secrets.
 DATABASE_CONNECTION.md
 
+# Private notes for future maintainers. Not for the public repo.
+HANDOFF.md
+
 __pycache__/
 *.tmp
