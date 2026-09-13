@@ -187,6 +187,28 @@ function openDefinitions(){
   dlg.showModal();
 }
 
+/* ---- dark mode switch ----
+   With no saved choice the page follows the device's setting. Flipping the
+   switch saves an explicit choice, which the script in each page's <head>
+   applies before the first paint on later visits. */
+function setupThemeToggle(){
+  const btn = document.getElementById("theme-toggle");
+  if(!btn) return;
+  const root = document.documentElement;
+  const media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  const isDark = ()=> root.dataset.theme ? root.dataset.theme === "dark" : !!(media && media.matches);
+  const sync = ()=> btn.setAttribute("aria-checked", String(isDark()));
+  btn.addEventListener("click", ()=>{
+    const next = isDark() ? "light" : "dark";
+    root.dataset.theme = next;
+    try{ localStorage.setItem("mssb-theme", next); }catch(e){ /* private mode: still switches */ }
+    sync();
+  });
+  if(media && media.addEventListener) media.addEventListener("change", sync);
+  sync();
+}
+setupThemeToggle();
+
 return {METRICS, GROUPS, GCOLOR, DEFINITIONS, seasons, bySlug, rules,
         fmt, menuLabel, esc, badge, updatedLabel, whyNot, loadSeason, openDefinitions};
 })();

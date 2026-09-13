@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MSSB Savant Sliders</title>
+<script>
+/* Apply a saved theme before the first paint, so a reload in dark mode doesn't flash light. */
+try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}
+</script>
 <link rel="stylesheet" href="shared.css">
 <style>
   .cols{display:grid;grid-template-columns:360px minmax(0,1fr);gap:26px;align-items:start}
@@ -11,7 +15,7 @@
 
   /* ---- leaderboard ---- */
   .lb-row{display:grid;grid-template-columns:26px minmax(0,1fr) 54px;gap:9px;align-items:center;
-          padding:5px 2px;border-bottom:1px solid #d0d0d0;font-size:13px}
+          padding:5px 2px;border-bottom:1px solid var(--rowline);font-size:13px}
   .lb-row:last-child{border-bottom:none}
   .lb-rank{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;font-size:12px}
   .lb-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
@@ -23,7 +27,7 @@
 
   /* ---- player name ---- */
   .pname{margin-bottom:18px}
-  .pname .box{background:var(--chrome);border:1px solid #9a9a9a;padding:7px 13px;
+  .pname .box{background:var(--chrome);border:1px solid var(--boxborder);padding:7px 13px;
               font-size:26px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   /* ---- slider rows ---- */
@@ -38,7 +42,12 @@
 <body>
 <div class="wrap">
 <header>
-  <h1>MSSB <b>Savant</b> Sliders</h1>
+  <div class="topbar">
+    <h1>MSSB <b>Savant</b> Sliders</h1>
+    <button type="button" class="theme-toggle" id="theme-toggle" role="switch" aria-checked="false">
+      <span>Dark mode</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span>
+    </button>
+  </div>
   <p id="meta" class="meta">Mario Superstar Baseball &mdash; advanced player percentiles</p>
   <nav class="tabs" aria-label="Pages">
     <a href="index.html" aria-current="page">Leaderboard</a>

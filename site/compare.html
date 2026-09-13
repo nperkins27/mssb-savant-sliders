@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Compare Players · MSSB Savant Sliders</title>
+<script>
+/* Apply a saved theme before the first paint, so a reload in dark mode doesn't flash light. */
+try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}
+</script>
 <link rel="stylesheet" href="shared.css">
 <style>
   .controls .note{color:var(--muted);font-size:12.5px;margin:0 0 8px}
@@ -27,14 +31,14 @@
   .card-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:12px}
   .card-controls label{display:block;min-width:0;font-size:11px;color:var(--muted);text-transform:uppercase;
                        letter-spacing:.7px}
-  .card-controls select{display:block;width:100%;margin-top:5px;background:#fff;color:var(--ink);
+  .card-controls select{display:block;width:100%;margin-top:5px;background:var(--surface);color:var(--ink);
                         border:1px solid var(--line);padding:6px 8px;font-size:13.5px;
                         font-family:var(--sans);text-transform:none;letter-spacing:0}
 
-  .c-title{background:var(--chrome);border:1px solid #9a9a9a;padding:5px 11px;font-size:21px;
+  .c-title{background:var(--chrome);border:1px solid var(--boxborder);padding:5px 11px;font-size:21px;
            line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .c-meta{color:var(--muted);font-size:12px;line-height:1.5;margin:7px 0 2px;min-height:18px}
-  .floor-note{color:#8a4b00}
+  .floor-note{color:var(--why)}
 
   /* Every row is the same height in every card, so a metric sits at the same
      height across the whole comparison and can be read straight across. */
@@ -50,15 +54,20 @@
   .card .sval.na{font-size:14px}
 
   /* ---- dragging ---- */
-  .card-placeholder{border:2px dashed var(--boxline);background:rgba(123,167,204,.14)}
-  .card.dragging{box-shadow:0 16px 40px rgba(0,0,0,.28);opacity:.97}
+  .card-placeholder{border:2px dashed var(--boxline);background:var(--drop-zone)}
+  .card.dragging{box-shadow:0 16px 40px var(--shadow);opacity:.97}
   body.is-dragging, body.is-dragging *{cursor:grabbing !important}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-  <h1>MSSB <b>Savant</b> Sliders</h1>
+  <div class="topbar">
+    <h1>MSSB <b>Savant</b> Sliders</h1>
+    <button type="button" class="theme-toggle" id="theme-toggle" role="switch" aria-checked="false">
+      <span>Dark mode</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span>
+    </button>
+  </div>
   <p class="meta">Mario Superstar Baseball &mdash; compare players, in the same season or across seasons</p>
   <nav class="tabs" aria-label="Pages">
     <a href="index.html">Leaderboard</a>
