@@ -64,6 +64,11 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
     <div id="season-picker"></div>
   </div>
   <div>
+    <label for="min-games">Minimum games</label>
+    <input type="number" id="min-games" class="min-games" min="1" max="999" step="1" inputmode="numeric"
+           placeholder="Default" title="Only rank players with at least this many games. Blank: the usual rules.">
+  </div>
+  <div>
     <label for="metric">Leaderboard metric</label>
     <select id="metric"></select>
   </div>
@@ -106,6 +111,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   player who played is ranked on every metric they have data for.
   <b>Selecting several</b> seasons or tournaments ranks players on their combined totals; minimums
   apply to the totals unless a tournament is included, and ELO isn&rsquo;t shown.
+  <b>Minimum games</b>, when filled in, replaces the games minimum for whatever is selected: only
+  players with that many games are ranked, and percentiles are recalculated among them.
   Completed seasons are final; the current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
   Metric definitions follow Project Rio&rsquo;s season metrics. Data: Rio netplay database.
 </footer>
@@ -119,6 +126,7 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
 "use strict";
 const {METRICS, GROUPS, GCOLOR, fmt, menuLabel, esc, whyNot} = MSSB;
 let S = null, curKey = "";   /* the selection on screen, and the key of the one last picked */
+let picker = null, minGames = null;
 
 function init(){
   document.getElementById("defs-btn").onclick = MSSB.openDefinitions;
@@ -136,18 +144,28 @@ function init(){
   ms.value = "gen_adjusted_elo";
 
   const start = [MSSB.latestSeason().slug];   /* newest season by default */
-  MSSB.seasonPicker(document.getElementById("season-picker"),
-                    {selected: start, onChange: selectSeason, buttonId: "season-btn"});
+  picker = MSSB.seasonPicker(document.getElementById("season-picker"),
+                             {selected: start, onChange: selectSeason, buttonId: "season-btn"});
 
   ms.onchange = renderLB;
   document.getElementById("player").onchange = renderPlayer;
+  let typing;
+  document.getElementById("min-games").addEventListener("input", e=>{
+    clearTimeout(typing);
+    typing = setTimeout(()=>{
+      const next = MSSB.parseMinGames(e.target.value);
+      if(next === minGames) return;
+      minGames = next;
+      selectSeason(picker.get());
+    }, 250);
+  });
 
   selectSeason(start);
 }
 
 /* slugs: one season/tournament, or several to combine. */
 function selectSeason(slugs){
-  const key = MSSB.selectionKey(slugs);
+  const key = MSSB.selectionKey(slugs) + "@" + (minGames ?? "");
   curKey = key;
   let settled = false;
   /* Only flash "Loading" when the files are actually slow to arrive. */
@@ -157,7 +175,7 @@ function selectSeason(slugs){
       `<p class="sub">Loading ${esc(MSSB.selectionLabel(slugs))}&hellip;</p>`;
     document.getElementById("pd").innerHTML = "";
   }, 150);
-  MSSB.loadSelection(slugs).then(
+  MSSB.loadSelection(slugs, minGames).then(
     season=>{ settled = true; if(curKey===key) show(season); },
     err=>{
       settled = true;
@@ -180,6 +198,7 @@ function show(season){
     : "";
 
   const tournament = MSSB.isTournament(s), combined = MSSB.isCombined(s), open = MSSB.noMinimums(s);
+  const min = s.minGames ?? null, games = n => `${n} game${n===1 ? "" : "s"}`;
   const parts = combined
     ? [s.seasonCount && `${s.seasonCount} season${s.seasonCount===1 ? "" : "s"}`,
        s.tournamentCount && `${s.tournamentCount} tournament${s.tournamentCount===1 ? "" : "s"}`]
@@ -189,19 +208,30 @@ function show(season){
     `<br><b title="${esc(s.name)}">${esc(combined ? s.label : s.name)}</b>` + MSSB.badge(s) +
     (combined ? ` &middot; ${esc(parts)}` : "") +
     ` &middot; ${esc(s.start)} to ${esc(s.end)}` +
-    (open ? ` &middot; ${s.players} players &middot; no minimums`
-          : ` &middot; ${s.qualified} qualified players`) +
+    (min != null ? ` &middot; ${s.qualified} players with ${min}+ games`
+     : open ? ` &middot; ${s.players} players &middot; no minimums`
+     : ` &middot; ${s.qualified} qualified players`) +
     ` &middot; updated ${esc(MSSB.updatedLabel(s))}`;
+  /* The rule sentence: the minimum games filter when it's set, otherwise the
+     selection's own minimums. */
+  const rule = min != null
+    ? `<b>Minimum ${games(min)}${combined ? " across the selection" : ""}:</b> only players with at least
+       that many are ranked, and percentiles are recalculated among them. ` +
+      (open ? `No other minimums apply.`
+            : `This replaces the usual ${MSSB.DEFAULT_MIN_GAMES}-game minimum; the other minimums
+               (such as 25 charge swings) still apply.`)
+    : combined
+      ? (s.includesTournament
+          ? `Includes a tournament, so no minimums apply.`
+          : `Season minimums apply to the combined totals (10 games, and so on).`)
+      : tournament ? esc(MSSB.TOURNAMENT_NOTE) : "";
   const note = document.getElementById("mode-note");
-  note.hidden = !(tournament || combined);
-  note.innerHTML = combined
+  note.hidden = !(tournament || combined || min != null);
+  note.innerHTML = (combined
     ? `<b>Combined selection:</b> ${esc(s.name)}. Players are ranked on their totals across all of
-       them. <b>${esc(MSSB.ELO_NOTE)}</b> ` +
-      (s.includesTournament
-        ? `Includes a tournament, so no minimums apply.`
-        : `Season minimums apply to the combined totals (10 games, and so on).`)
+       them. <b>${esc(MSSB.ELO_NOTE)}</b> `
     : tournament
-      ? `<b>${esc(MSSB.tournamentSeries(s))} tournament: no minimums.</b> ${esc(MSSB.TOURNAMENT_NOTE)}` : "";
+      ? `<b>${esc(MSSB.tournamentSeries(s))} tournament${min != null ? "." : ": no minimums."}</b> ` : "") + rule;
 
   ps.innerHTML = "";
   season.players.forEach(x=>{   /* already sorted by name */
@@ -223,9 +253,11 @@ function renderLB(){
   const m = METRICS.find(x=>x.k===document.getElementById("metric").value);
   document.getElementById("lb-title").textContent = "Leaderboard — " + menuLabel(m);
   const ranked = S.board(m), open = MSSB.noMinimums(S.entry), combined = MSSB.isCombined(S.entry);
+  const min = S.entry.minGames ?? null;
   document.getElementById("lb-sub").textContent = combined && m.k === "gen_adjusted_elo"
     ? "Not ranked for multiple selections."
-    : (open ? `${ranked.length} players, no minimums` : `${ranked.length} qualified`) +
+    : (min != null ? `${ranked.length} players with ${min}+ games`
+       : open ? `${ranked.length} players, no minimums` : `${ranked.length} qualified`) +
       (combined ? ", ranked on combined totals" : ", ranked by percentile") + ". Click a name to load it.";
   const colr = GCOLOR[m.g];
   const el = document.getElementById("lb");
@@ -239,6 +271,8 @@ function renderLB(){
     </div>`;
   }).join("") || (combined && m.k === "gen_adjusted_elo"
     ? `<p class="sub"><b>${esc(MSSB.ELO_NOTE)}</b> Pick another metric, or a single season or tournament.</p>`
+    : min != null
+      ? `<p class="sub">No player with ${min}+ games qualifies for this metric in this selection.</p>`
     : open
       ? `<p class="sub">No player has data for this metric in this selection.</p>`
       : `<p class="sub">No qualified players yet. Players appear once they reach

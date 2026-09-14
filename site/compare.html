@@ -83,6 +83,11 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   <div>
     <button type="button" class="btn" id="add">+ Add comparison</button>
   </div>
+  <div>
+    <label for="min-games">Minimum games</label>
+    <input type="number" id="min-games" class="min-games" min="1" max="999" step="1" inputmode="numeric"
+           placeholder="Default" title="Only rank players with at least this many games, on every card. Blank: the usual rules.">
+  </div>
   <p class="note" id="count"></p>
 </div>
 
@@ -101,6 +106,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   extreme percentiles.
   <b>Tick several</b> seasons or tournaments on a card to rank that player on their combined totals;
   minimums apply to the totals unless a tournament is included, and ELO isn&rsquo;t shown.
+  <b>Minimum games</b>, when filled in, applies to every card and replaces its games minimum: only
+  players with that many games are ranked, and percentiles are recalculated among them.
   Metric definitions follow Project Rio&rsquo;s season metrics. Data: Rio netplay database.
 </footer>
 </div>
@@ -118,9 +125,12 @@ const GRIP = `<svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"
 
 const cards = ()=>[...grid.querySelectorAll(".card")];
 const announce = msg=>{ document.getElementById("live").textContent = msg; };
+let minGames = null;   /* the minimum games filter, shared by every card */
 
-/* ---- the comparison lives in the URL: #c=<season>[+<season>...]~<user id>,... ---- */
+/* ---- the comparison lives in the URL: #c=<season>[+<season>...]~<user id>,...[&min=<games>] ---- */
 function readHash(){
+  const mg = location.hash.match(/[#&]min=(\d+)/);
+  minGames = mg ? MSSB.parseMinGames(mg[1]) : null;
   const m = location.hash.match(/^#c=([^&]*)/);
   if(!m) return [];
   return decodeURIComponent(m[1]).split(",").slice(0, MAX_CARDS).map(part=>{
@@ -130,7 +140,7 @@ function readHash(){
 }
 function writeHash(){
   const specs = cards().map(el=>`${MSSB.selectionKey(el._st.slugs)}~${el._st.userId ?? ""}`);
-  history.replaceState(null, "", "#c=" + specs.join(","));
+  history.replaceState(null, "", "#c=" + specs.join(",") + (minGames == null ? "" : "&min=" + minGames));
 }
 
 /* ---- cards ---- */
@@ -172,9 +182,10 @@ function addCard(spec){
 }
 
 function loadCard(el){
-  const key = MSSB.selectionKey(el._st.slugs), sameKey = ()=>MSSB.selectionKey(el._st.slugs) === key;
+  const cardKey = ()=>MSSB.selectionKey(el._st.slugs) + "@" + (minGames ?? "");
+  const key = cardKey(), sameKey = ()=>cardKey() === key;
   el.querySelector(".c-body").innerHTML = `<p class="sub">Loading&hellip;</p>`;
-  MSSB.loadSelection(el._st.slugs).then(season=>{
+  MSSB.loadSelection(el._st.slugs, minGames).then(season=>{
     if(!sameKey() || !el.isConnected) return;   /* changed or removed meanwhile */
     el._st.season = season;
     const ps = el.querySelector(".c-player");
@@ -228,16 +239,23 @@ function renderCard(el){
     body.innerHTML = `<p class="sub">No players in this season yet.</p>`;
     return;
   }
-  const games = season.games(p), minGames = (MSSB.rules.gen_games_played || [])[1];
+  const games = season.games(p), seasonFloor = (MSSB.rules.gen_games_played || [])[1];
   title.textContent = p.name;
-  const tournament = MSSB.isTournament(s), combined = MSSB.isCombined(s);
+  const tournament = MSSB.isTournament(s), combined = MSSB.isCombined(s), min = s.minGames ?? null;
+  /* Kept no longer than the usual notes, so the meta line never wraps onto a
+     second line in one card only and pushes its rows out of line. */
+  const filterTip = min != null ? ` Minimum games filter: only players with ${min}+ games are ranked.` : "";
   const note = combined
-    ? `<span class="floor-note" title="${esc(s.name + ". Ranked on combined totals. " + MSSB.ELO_NOTE)}">combined${
-        s.includesTournament ? ", no minimums" : minGames != null && games < minGames ? `, below the ${minGames}-game floor` : ""
+    ? `<span class="floor-note" title="${esc(s.name + ". Ranked on combined totals. " + MSSB.ELO_NOTE + filterTip)}">combined${
+        min != null ? `, min ${min} games`
+        : s.includesTournament ? ", no minimums" : seasonFloor != null && games < seasonFloor ? `, below the ${seasonFloor}-game floor` : ""
       }</span>`
     : tournament
-      ? `<span class="floor-note" title="${esc(MSSB.TOURNAMENT_NOTE)}">tournament, no minimums</span>`
-      : minGames != null && games < minGames ? `<span class="floor-note">below the ${minGames}-game floor</span>` : "";
+      ? `<span class="floor-note" title="${esc(min != null ? filterTip.trim() : MSSB.TOURNAMENT_NOTE)}">tournament, ${
+          min != null ? `min ${min} games` : "no minimums"}</span>`
+      : min != null
+        ? (games < min ? `<span class="floor-note" title="${esc(filterTip.trim())}">below the ${min}-game minimum</span>` : "")
+        : seasonFloor != null && games < seasonFloor ? `<span class="floor-note">below the ${seasonFloor}-game floor</span>` : "";
   meta.innerHTML = `<span title="${esc(s.name)}">${esc(combined ? s.label : s.name)}</span>` +
     (combined ? "" : MSSB.badge(s)) + ` &middot; ${games} game${games===1 ? "" : "s"}` +
     (note ? ` &middot; ${note}` : "");
@@ -386,6 +404,19 @@ function init(){
     return;
   }
   const specs = readHash();
+  const minInput = document.getElementById("min-games");
+  if(minGames != null) minInput.value = String(minGames);
+  let typing;
+  minInput.addEventListener("input", ()=>{
+    clearTimeout(typing);
+    typing = setTimeout(()=>{
+      const next = MSSB.parseMinGames(minInput.value);
+      if(next === minGames) return;
+      minGames = next;
+      cards().forEach(loadCard);
+      writeHash();
+    }, 250);
+  });
   while(specs.length < MIN_CARDS) specs.push({slugs: [MSSB.latestSeason().slug], userId: null});
   specs.forEach(addCard);
 }

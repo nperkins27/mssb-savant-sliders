@@ -193,16 +193,28 @@ function selectionLabel(slugs){
   return list.length <= 4 ? list.map(shortName).join(" + ") : `${list.length} selected`;
 }
 
+/* ---- minimum games filter ----
+   An optional number typed on either page. It replaces the games minimum (10
+   in a season, none in a tournament) and players are re-ranked without those
+   below it. Blank means the usual rules. */
+function parseMinGames(text){
+  const n = parseInt(String(text ?? "").trim(), 10);
+  return Number.isNaN(n) ? null : Math.min(Math.max(n, 1), 999);   /* 0 is the same as 1: everyone who played */
+}
+const DEFAULT_MIN_GAMES = (rules.gen_games_played || [])[1] ?? 10;
+
 /* Why a metric shows n/a, from the same floors the build used. Tournaments
    (and selections that include one) have no floors, so there it only ever
-   means the player has no data. */
+   means the player has no data -- unless a minimum games filter is set. */
 function whyNot(m, c, games, entry){
   if(isCombined(entry) && m.k === "gen_adjusted_elo") return "not shown for multiple selections";
+  const scope = isCombined(entry) ? " combined" : "", min = entry && entry.minGames;
+  if(min != null && (games||0) < min) return `needs ${min} games${scope} (has ${games||0})`;
   if(noMinimums(entry)) {
     return c.value==null ? `no data in this ${isCombined(entry) ? "selection" : "tournament"}` : "not qualified";
   }
-  const r = rules[m.k] || [], scope = isCombined(entry) ? " combined" : "";
-  if(r[1]!=null && (games||0) < r[1]) return `needs ${r[1]} games${scope} (has ${games||0})`;
+  const r = rules[m.k] || [];
+  if(min == null && r[1]!=null && (games||0) < r[1]) return `needs ${r[1]} games${scope} (has ${games||0})`;
   if(r[2]!=null && (c.den||0) < r[2]) return `needs ${r[2]} ${m.d}${scope} (has ${c.den||0})`;
   if(c.value==null) return isCombined(entry) ? "no data in this selection" : "no data this season";
   return "not qualified";
@@ -272,17 +284,23 @@ function percentileRanks(values, higherIsBetter){
    from the summed numerator and denominator (27 x runs / outs for per-9s),
    games are summed, and the season floors apply to those totals -- unless a
    tournament is included, when there are none. ELO has no meaningful total,
-   so it is never ranked here. Returns the same shape as a single season. */
+   so it is never ranked for several views; a single view keeps its own.
+   minGames, when set, replaces the games floor (other floors are unchanged),
+   which is also how one season is re-ranked with the filter.
+   Returns the same shape as a single season. */
 const PER_9 = new Set(METRICS.filter(m=>m.f==="per9").map(m=>m.k));
-function combine(views){
+const ELO = METRICS.find(m=>m.k==="gen_adjusted_elo");
+function combine(views, minGames = null){
   const entries = views.map(v=>v.entry);
   const includesTournament = entries.some(isTournament);
+  const single = views.length === 1;
   const acc = new Map();
   views.forEach(v=>v.players.forEach(p=>{
     let a = acc.get(p.id);
-    if(!a) acc.set(p.id, a = {id: p.id, name: p.name, games: 0, counts: {}});
+    if(!a) acc.set(p.id, a = {id: p.id, name: p.name, games: 0, counts: {}, elo: null});
     a.name = p.name;                       /* views run oldest first: newest name wins */
     a.games += v.games(p) || 0;
+    if(single) a.elo = (v.cell(p, ELO) || {}).value ?? null;
     METRICS.forEach(m=>{
       const c = v.cell(p, m);
       if(!c || c.den == null) return;
@@ -297,18 +315,19 @@ function combine(views){
   const cells = new Map(people.map(a=>[a.id, []]));
   METRICS.forEach((m, mi)=>{
     const r = rules[m.k] || [true, null, null];
+    const gamesFloor = minGames != null ? minGames : includesTournament ? null : r[1];
+    const denFloor = includesTournament ? null : r[2];
     const staged = people.map(a=>{
       let value = null, num = null, den = null;
       if(m.k === "gen_games_played") value = a.games;
-      else if(m.k !== "gen_adjusted_elo"){
+      else if(m.k === "gen_adjusted_elo") value = a.elo;
+      else {
         [num, den] = a.counts[m.k] || [0, 0];
         value = den ? (PER_9.has(m.k) ? 27 : 1) * num / den : null;
       }
       let ok = value != null;
-      if(ok && !includesTournament){
-        if(r[1] != null && a.games < r[1]) ok = false;
-        if(r[2] != null && (den || 0) < r[2]) ok = false;
-      }
+      if(ok && gamesFloor != null && a.games < gamesFloor) ok = false;
+      if(ok && denFloor != null && (den || 0) < denFloor) ok = false;
       if(den != null && den <= 0) ok = false;
       return {id: a.id, cell: [value, null, null, num, den, ok]};   /* FIELDS order */
     });
@@ -322,8 +341,9 @@ function combine(views){
 
   const slugs = entries.map(e=>e.slug);
   const builtAt = entries.map(e=>e.built_at || "").sort().pop();
-  const entry = {
-    kind: "combined", slug: slugs.join("+"), slugs, includesTournament,
+  /* One view keeps its own identity (name, kind, badge), only re-ranked. */
+  const entry = single ? {...entries[0], minGames, players: people.length} : {
+    kind: "combined", slug: slugs.join("+"), slugs, includesTournament, minGames,
     name: entries.map(e=>e.name).join(" + "), label: selectionLabel(slugs),
     seasonCount: entries.filter(e=>!isTournament(e)).length,
     tournamentCount: entries.filter(isTournament).length,
@@ -336,17 +356,18 @@ function combine(views){
   return view;
 }
 
-/* One slug: that season as built. Several: their combination, computed once. */
+/* One slug and no filter: that season exactly as built. Several, or a minimum
+   games filter: re-ranked in the browser, computed once per selection + minimum. */
 const combos = {};
-function loadSelection(slugs){
+function loadSelection(slugs, minGames = null){
   const ordered = orderSlugs(slugs);
   if(!ordered.length) return Promise.reject(new Error("Nothing selected."));
-  if(ordered.length === 1) return loadSeason(ordered[0]);
-  const key = ordered.join("+");
+  if(ordered.length === 1 && minGames == null) return loadSeason(ordered[0]);
+  const key = ordered.join("+") + (minGames == null ? "" : "@" + minGames);
   if(!combos[key]) combos[key] = Promise.all(ordered.map(loadSeason)).then(views=>{
     const broken = views.find(v=>v.missing.length);
     if(broken) throw new Error(`${broken.entry.name} is missing ${broken.missing.join(", ")}.`);
-    return combine(views);
+    return combine(views, minGames);
   }).catch(err=>{ delete combos[key]; throw err; });
   return combos[key];
 }
@@ -470,6 +491,12 @@ function definitionsHTML(){
       across the selection, and so on) unless the selection includes a tournament, in which case there
       are none. ELO isn't shown for a multiple selection, because a rating belongs to one season or
       tournament.</p>
+    <p class="defs-note defs-tournament"><b>Minimum games filter.</b> Both pages have an optional
+      Minimum games box. When it's set, only players with at least that many games (in total, when
+      several seasons or tournaments are selected) are ranked, and every percentile is recalculated
+      among them. It replaces the ${minGames}-game season minimum, up or down, and applies to tournaments
+      too. In seasons the other minimums listed below still apply; with a tournament selected there are
+      none. Leave it blank for the usual rules.</p>
     ${sections}
   </div>`;
 }
@@ -516,5 +543,6 @@ return {METRICS, GROUPS, GCOLOR, DEFINITIONS, seasons, bySlug, rules,
         fmt, counts, menuLabel, esc, badge, updatedLabel, whyNot, loadSeason, openDefinitions,
         isTournament, tournamentSeries, TOURNAMENT_NOTE, latestSeason,
         isCombined, noMinimums, ELO_NOTE, orderSlugs, selectionKey, selectionLabel,
-        loadSelection, seasonPicker, _combine: combine, _percentileRanks: percentileRanks};
+        loadSelection, seasonPicker, parseMinGames, DEFAULT_MIN_GAMES,
+        _combine: combine, _percentileRanks: percentileRanks};
 })();

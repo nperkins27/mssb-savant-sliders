@@ -73,7 +73,16 @@ and players are ranked with a JavaScript port of Rio's `qualifies()` and
 `percentile_ranks()`. Season minimums apply to the combined totals; a selection
 that includes a tournament has none. ELO has no combined value and shows n/a.
 Nothing is precomputed for combinations, so the build and data files are
-unchanged. Combining a single season reproduces its built file exactly, and
+unchanged.
+
+Both pages also have an optional **Minimum games** box (on the compare page it
+applies to every card and is kept in the URL as `&min=N`). When it's filled in,
+it replaces the games minimum for whatever is selected, up or down: only players
+with at least that many games (summed across a multiple selection) are ranked,
+and the same browser-side ranking recalculates every percentile, ELO included for
+a single season or tournament. In seasons the other minimums still apply; with a
+tournament selected there are none. Set to a selection's usual minimum, it
+reproduces the built files exactly. Combining a single season reproduces its built file exactly, and
 combinations match `build_rows()` run on the same summed counts in Python.
 
 ## How the refresh works

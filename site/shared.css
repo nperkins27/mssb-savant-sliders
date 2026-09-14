@@ -108,7 +108,10 @@ header h1 b{font-weight:700}
                 letter-spacing:.7px;margin-bottom:5px}
 .controls select{background:var(--surface);color:var(--ink);border:1px solid var(--line);
           padding:7px 9px;font-size:14px;font-family:var(--sans);min-width:210px}
-select:focus-visible,button:focus-visible{outline:2px solid var(--boxline);outline-offset:1px}
+.min-games{display:block;width:118px;background:var(--surface);color:var(--ink);border:1px solid var(--line);
+           padding:7px 9px;font-size:14px;font-family:var(--sans)}
+.min-games::placeholder{color:var(--na)}
+select:focus-visible,button:focus-visible,.min-games:focus-visible{outline:2px solid var(--boxline);outline-offset:1px}
 .btn{background:var(--surface);color:var(--ink);border:1px solid var(--line);padding:7px 14px;
      font-size:14px;font-family:var(--sans);cursor:pointer;line-height:1.3}
 .btn:hover:not(:disabled){background:var(--surface-hover)}
