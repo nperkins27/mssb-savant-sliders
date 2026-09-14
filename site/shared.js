@@ -8,13 +8,17 @@ window.MSSB = (() => {
 /* Keys are Rio's season_metric names. Pages look metrics up BY NAME in each
    season file, so a change in the data's order cannot misalign them.
    n / d name the numerator and denominator shown under a rate. Per-9 metrics
-   ("per9") have outs as their denominator, shown as innings. */
+   ("per9") have outs as their denominator, shown as innings. Plain ratios
+   ("ratio") show three decimals, with nu / du as the short units under them. */
 const METRICS = [
   {k:"gen_adjusted_elo",          label:"ELO",                 g:"general",  f:"int"},
   {k:"gen_games_played",          label:"Games Played",        g:"general",  f:"int"},
   {k:"gen_runs_per_9",            label:"Runs/9",              g:"general",  f:"per9",                         n:"runs scored"},
   {k:"gen_runs_against_per_9",    label:"Runs Against/9",      g:"general",  f:"per9",                         n:"runs allowed"},
   {k:"bat_barrel_pct",            label:"Barrel %",            g:"batting",  f:"pct", menu:"Barrel % (bat)",  n:"barrels",           d:"contacts"},
+  {k:"bat_star_swing_barrel_pct", label:"Star Swing Barrel %", g:"batting",  f:"pct",                          n:"barrels",           d:"star swing contacts"},
+  {k:"bat_star_slug_efficiency",  label:"Star Slug Efficiency", g:"batting", f:"ratio",                        n:"bases on star swings", d:"stars used",
+   nu:"bases", du:"stars"},
   {k:"bat_chase_pct",             label:"Chase %",             g:"batting",  f:"pct",                          n:"chases",            d:"out-of-zone pitches"},
   {k:"bat_whiff_pct",             label:"Whiff %",             g:"batting",  f:"pct", menu:"Whiff % (bat)",   n:"whiffs",            d:"swings"},
   {k:"bat_two_strike_whiff_pct",  label:"2-Strike Whiff %",    g:"batting",  f:"pct",                          n:"whiffs",            d:"2-strike swings"},
@@ -44,6 +48,17 @@ const DEFINITIONS = {
     "Runs the player's team allows per 9 innings in the field (every 27 outs recorded on defense).",
   bat_barrel_pct:
     "Share of the batter's contacts that are nice or perfect (nice-left, perfect, nice-right) rather than sour.",
+  bat_star_swing_barrel_pct:
+    "Same as Barrel %, but only for contact made with a star swing: the share of the batter's star swing " +
+    "contacts that are nice or perfect rather than sour. Counts every character, captain or not.",
+  bat_star_slug_efficiency:
+    "Bases gained per star used on star swings. Every star swing counts, whether or not it ends the at-bat: " +
+    "a miss, foul or out adds its stars and no bases, and a single, double, triple or home run adds 1, 2, 3 or 4 bases. " +
+    "A star swing uses 1 star, except that a captain-eligible character (Mario, Luigi, Peach, Daisy, Yoshi, Birdo, " +
+    "Wario, Waluigi, DK, Diddy, Bowser, Bowser Jr) who isn't the team's captain uses 2 stars when they make contact, " +
+    "fouls included. For example, a star swing miss (0 bases, 1 star), a double by a non-captain Mario (2 bases, " +
+    "2 stars), a double by the captain (2 bases, 1 star) and a single by Toad (1 base, 1 star) total 5 bases for " +
+    "5 stars: 1.000.",
   bat_chase_pct:
     "Share of pitches outside the strike zone that the batter swings at.",
   bat_whiff_pct:
@@ -94,6 +109,7 @@ function fmt(m, v){
   if(v==null) return "—";
   if(m.f==="int") return Math.round(v).toLocaleString();
   if(m.f==="per9") return v.toFixed(2);
+  if(m.f==="ratio") return v.toFixed(3);
   return (v*100).toFixed(1)+"%";
 }
 /* Outs as innings in baseball notation: 136 outs is 45.1 (45 and one third). */
@@ -102,9 +118,11 @@ function innings(outs){ return Math.floor(outs/3) + (outs % 3 ? "." + (outs % 3)
    null for metrics with no counts (ELO, games played). */
 function counts(m, c){
   if(!c || c.den==null) return null;
-  return m.f==="per9"
-    ? {text:`${c.num} in ${innings(c.den)} inn`, title:`${c.num} ${m.n} in ${innings(c.den)} innings (${c.den} outs)`}
-    : {text:`${c.num}/${c.den}`, title:`${c.num} ${m.n} of ${c.den} ${m.d}`};
+  if(m.f==="per9")
+    return {text:`${c.num} in ${innings(c.den)} inn`, title:`${c.num} ${m.n} in ${innings(c.den)} innings (${c.den} outs)`};
+  if(m.f==="ratio")
+    return {text:`${c.num} ${m.nu} / ${c.den} ${m.du}`, title:`${c.num} ${m.n} / ${c.den} ${m.d}`};
+  return {text:`${c.num}/${c.den}`, title:`${c.num} ${m.n} of ${c.den} ${m.d}`};
 }
 function menuLabel(m){ return m.menu || m.label; }
 /* Usernames come from the database and are rendered on a public page. */

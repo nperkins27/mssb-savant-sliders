@@ -12,7 +12,7 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 | `site/shared.js` | Used by both pages: the metric list, the **metric definitions text** (`DEFINITIONS`), season loading and the definitions dialog |
 | `site/shared.css` | Styles used by both pages |
 | `site/data/manifest.js` / `.json` | List of seasons: dates, final or in progress, when each was built |
-| `site/data/seasons/<slug>.js` | One season's players and all 18 metrics, loaded when that season is picked |
+| `site/data/seasons/<slug>.js` | One season's players and all 20 metrics, loaded when that season is picked |
 | `build_seasons.py` | Builds whatever season data is due (read-only against the database) |
 | `season_metrics.py` | Metric definitions, floors, adjusted ELO and percentile ranking. **Vendored verbatim** from ProjectRio-web |
 | `season_metrics_sql.py` | The season discovery rule and the three per-season queries, vendored from ProjectRio-web |
@@ -27,12 +27,17 @@ The two definition files are copied from that PR rather than rewritten, and
 `build_seasons.py` makes the same four queries per season as Rio's job, so the
 numbers match.
 
-**18 metrics.** The PR's 14, plus four that are not pushed to the PR yet:
-Runs/9 and Runs Against/9 (general), 2-Strike Whiff % (batting: whiffs ÷ swings
-on pitches thrown with two strikes already in the count) and Special Catches/9
-(pitching/fielding).
+**20 metrics.** The PR's 14, plus six that are not pushed to the PR yet:
+Runs/9 and Runs Against/9 (general); 2-Strike Whiff % (batting: whiffs ÷ swings
+on pitches thrown with two strikes already in the count), Star Swing Barrel %
+(batting: Barrel % on star swing contacts only, needs 25 in a season) and Star
+Slug Efficiency (batting: bases gained on star swings ÷ stars used, needs 25
+stars used in a season); and Special Catches/9 (pitching/fielding).
 Per-9 metrics are 27 × count ÷ outs: runs against and special catches over the
 outs the player's team recorded in the field, runs over the outs it made at bat.
+Star Slug Efficiency counts every star swing, including misses, fouls and outs
+(0 bases). A star swing uses 1 star, or 2 when a captain-eligible character who
+isn't the team's captain makes contact (fouls included).
 
 Each season file stores, for every player and metric, the same columns as a
 `season_metric` row: value, percentile, pool size, numerator, denominator and
@@ -53,7 +58,7 @@ Tournaments are stars-off tag sets matched by name:
   since Rio types 2024 as League and 2025 as Season.
 
 Every one must also carry the Disable Superstars tag. They are listed alongside
-the seasons, with the same 18 metrics but **no qualification minimums**: every
+the seasons, with the same 20 metrics but **no qualification minimums**: every
 player who played at least one game is ranked on every metric they have data for. This is a site choice; Rio's
 `season_metric` table covers seasons only. `build_seasons.py` ranks them with
 Rio's own `build_rows()`, switching the floors off only while a tournament is

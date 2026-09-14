@@ -1,9 +1,10 @@
 # Vendored VERBATIM from ProjectRio-web app/season_metrics.py
 # (https://github.com/ProjectRio/ProjectRio-web/pull/154), so this site computes exactly what Rio's season_metric
 # table holds. Do not edit it here: change it upstream, then copy it back.
-# NOTE: includes gen_runs_per_9, gen_runs_against_per_9, pitch_special_catches_per_9
-# and bat_two_strike_whiff_pct, and removes bro(b) from cCHARGE_TIMING_CHARS
-# (cPOWER_CHARS unchanged). None of that is pushed to the PR yet.
+# NOTE: includes gen_runs_per_9, gen_runs_against_per_9, pitch_special_catches_per_9,
+# bat_two_strike_whiff_pct, bat_star_swing_barrel_pct and bat_star_slug_efficiency,
+# and removes bro(b) from cCHARGE_TIMING_CHARS (cPOWER_CHARS unchanged). None of
+# that is pushed to the PR yet.
 '''Computation of per-season advanced percentiles (the "Savant Sliders" set).
 
 Split deliberately into two halves:
@@ -29,6 +30,8 @@ import math
 # can be split into batting / pitching / general without a lookup table.
 cSEASON_METRICS = (
     'bat_barrel_pct',
+    'bat_star_swing_barrel_pct',
+    'bat_star_slug_efficiency',
     'bat_chase_pct',
     'bat_whiff_pct',
     'bat_two_strike_whiff_pct',
@@ -67,12 +70,16 @@ cCHARGE_TIMING_CHARS = ('bro(h)', 'bro(f)', 'bowser', 'petey',
 #
 # min_games        floor on games played in the season -- the shared pool.
 # min_denominator  extra floor on the metric's own denominator, for metrics
-#                  restricted to a subset of characters, where playing plenty
-#                  of games does not guarantee a usable sample.
+#                  restricted to a subset of characters or swings, where
+#                  playing plenty of games does not guarantee a usable sample.
 cMIN_GAMES = 10
 
 cMETRIC_RULES = {
     'bat_barrel_pct':            (True,  cMIN_GAMES, None),
+    # Star swings only: at least 25 star swing contacts.
+    'bat_star_swing_barrel_pct': (True,  cMIN_GAMES, 25),
+    # Bases gained on star swings per star used: at least 25 stars used.
+    'bat_star_slug_efficiency':  (True,  cMIN_GAMES, 25),
     'bat_chase_pct':             (False, cMIN_GAMES, None),
     'bat_whiff_pct':             (False, cMIN_GAMES, None),
     'bat_two_strike_whiff_pct':  (False, cMIN_GAMES, None),

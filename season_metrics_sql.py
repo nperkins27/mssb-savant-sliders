@@ -5,8 +5,8 @@ Copied mechanically: the SQL text is unchanged except that SQLAlchemy's
 :name bind parameters are written as psycopg's %(name)s. Keep it in step with
 upstream; season_metrics.py documents the definitions.
 
-NOTE: includes the special-catches and two-strike whiff columns and RUNS_SQL
-for the per-9 metrics, which are not pushed to the PR yet.
+NOTE: includes the special-catches, two-strike whiff and star swing columns and
+RUNS_SQL for the per-9 metrics, which are not pushed to the PR yet.
 """
 
 # S9 Superstars Off is typed 'League' rather than 'Season', so it cannot be
@@ -42,6 +42,8 @@ BATTING_ORDER = (
     'bat_slap_timing_pct',
     'bat_charge_down_input_pct',
     'bat_two_strike_whiff_pct',
+    'bat_star_swing_barrel_pct',
+    'bat_star_slug_efficiency',
 )
 
 PITCHING_ORDER = (
@@ -53,20 +55,29 @@ PITCHING_ORDER = (
 )
 
 # One pass over the season's events, producing every numerator and denominator
-# for both roles. Batting fills all nine pairs; pitching fills five and pads
+# for both roles. Batting fills all eleven pairs; pitching fills five and pads
 # the rest with NULL so the two halves can be UNIONed. The fifth pitching pair
 # is special catches, whose denominator (outs recorded on defense) is NULL here
 # and filled in from cRUNS_SQL, the same outs the runs-against rate uses.
 #
-# Enum values: result_of_ab 1 strikeout / 2 walk / 3 HBP / 10 HR (1-16 is the
+# Enum values: result_of_ab 1 strikeout / 2 walk / 3 HBP / 7 single / 8 double /
+# 9 triple / 10 HR (1-16 is the
 # decodable range, so "not none" is `BETWEEN 1 AND 16`); 5 caught, 6 caught
 # line drive, 14 sac fly and 16 foul catch are the outs made by catching the
-# ball. type_of_swing 1 slap, 2 charge. type_of_contact 1/2/3 are the barrel
+# ball. type_of_swing 1 slap, 2 charge, 3 star. type_of_contact 1/2/3 are the barrel
 # values out of 0-4. input_direction_stick 4/5/6 are down, down-left,
 # down-right. event.strikes is the count going INTO the pitch (every S14
 # strikeout has strikes = 2). fielding_summary.action 2 is a sliding (diving) play and 3 a
 # wall jump; jump = 1 is a jump. A special catch is a catch made with any of
 # the three.
+#
+# Star slug efficiency is bases gained on star swings per star used. Every star
+# swing counts, whether or not it ends the at-bat: a whiff, foul or out adds
+# its stars and no bases; a single, double, triple or home run adds 1-4 bases.
+# A star swing costs 1 star, except that a captain-eligible character
+# (character.captain = 1) batting while not the team's captain
+# (character_game_summary.captain false) uses 2 stars when they make contact,
+# fouls included.
 AGGREGATE_SQL = '''
 WITH sg AS (
     SELECT DISTINCT gh.game_id
@@ -79,6 +90,8 @@ ev AS MATERIALIZED (
         CASE WHEN e.half_inning = 0 THEN g.away_player_id ELSE g.home_player_id END AS batter_user,
         CASE WHEN e.half_inning = 0 THEN g.home_player_id ELSE g.away_player_id END AS pitcher_user,
         ch.name_lowercase AS batter_char,
+        bcgs.captain AS batter_is_captain,
+        ch.captain AS batter_captainable,
         e.result_of_ab,
         e.strikes,
         ps.type_of_swing,
@@ -122,7 +135,16 @@ SELECT 'bat' AS role, batter_user AS user_id,
                        AND batter_char = ANY(%(power_chars)s))                                          AS d8,
     COUNT(*) FILTER (WHERE strikes = 2 AND type_of_swing IS NOT NULL AND type_of_swing <> 0
                        AND contact_summary_id IS NULL)                                               AS n9,
-    COUNT(*) FILTER (WHERE strikes = 2 AND type_of_swing IS NOT NULL AND type_of_swing <> 0)         AS d9
+    COUNT(*) FILTER (WHERE strikes = 2 AND type_of_swing IS NOT NULL AND type_of_swing <> 0)         AS d9,
+    COUNT(*) FILTER (WHERE type_of_swing = 3 AND contact_summary_id IS NOT NULL AND type_of_contact IN (1,2,3))     AS n10,
+    COUNT(*) FILTER (WHERE type_of_swing = 3 AND contact_summary_id IS NOT NULL AND type_of_contact IN (0,1,2,3,4)) AS d10,
+    COUNT(*) FILTER (WHERE type_of_swing = 3 AND result_of_ab = 7)
+      + 2 * COUNT(*) FILTER (WHERE type_of_swing = 3 AND result_of_ab = 8)
+      + 3 * COUNT(*) FILTER (WHERE type_of_swing = 3 AND result_of_ab = 9)
+      + 4 * COUNT(*) FILTER (WHERE type_of_swing = 3 AND result_of_ab = 10)                          AS n11,
+    COUNT(*) FILTER (WHERE type_of_swing = 3)
+      + COUNT(*) FILTER (WHERE type_of_swing = 3 AND batter_captainable = 1 AND batter_is_captain IS FALSE
+                           AND contact_summary_id IS NOT NULL)                                       AS d11
 FROM ev
 WHERE batter_user IS NOT NULL
 GROUP BY batter_user
@@ -142,7 +164,7 @@ SELECT 'pitch', pitcher_user,
     COUNT(*) FILTER (WHERE result_of_ab IN (5,6,14,16)
                        AND (field_action IN (2,3) OR field_jump = 1))                                AS n5,
     NULL AS d5,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 FROM ev
 WHERE pitcher_user IS NOT NULL
 GROUP BY pitcher_user
