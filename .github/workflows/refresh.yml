@@ -25,6 +25,7 @@ on:
       - "frame_results.py"
       - "player_games.py"
       - "trophy_overrides.json"
+      - "stamp_assets.py"
       - "build_seasons.py"
       - ".github/workflows/refresh.yml"
 
@@ -85,6 +86,13 @@ jobs:
             git pull --rebase origin "$GITHUB_REF_NAME"
             git push origin "HEAD:$GITHUB_REF_NAME"
           fi
+
+      # A page and its scripts must come from the same deploy: stamp local
+      # .js/.css URLs with a content hash, on the artifact only (after the
+      # data commit, so the stamped pages are never committed).
+      - name: Stamp asset versions
+        if: steps.build.outputs.ran == 'true'
+        run: python stamp_assets.py site
 
       - name: Package site
         if: steps.build.outputs.ran == 'true'

@@ -26,6 +26,7 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 | `season_metrics.py` | Metric definitions, floors, adjusted ELO and percentile ranking. **Vendored verbatim** from ProjectRio-web |
 | `season_metrics_sql.py` | The season discovery rule and the three per-season queries, vendored from ProjectRio-web |
 | `.github/workflows/refresh.yml` | Daily refresh + deploy to GitHub Pages |
+| `stamp_assets.py` | Run on deploy: adds a content hash to each page's script and stylesheet URLs, so browsers never pair a new page with an old cached script |
 
 ## The metrics
 
