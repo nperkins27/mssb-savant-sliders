@@ -154,19 +154,19 @@ window.MSSB_FRAMES = {
    17,
    "Birdo",
    105658,
-   1803
+   1804
   ],
   [
    14,
    "Boo",
    122256,
-   2138
+   2141
   ],
   [
    9,
    "Bowser",
    78364,
-   1087
+   1088
   ],
   [
    19,
@@ -178,7 +178,7 @@ window.MSSB_FRAMES = {
    53,
    "Bro(B)",
    29621,
-   594
+   595
   ],
   [
    52,
@@ -196,13 +196,13 @@ window.MSSB_FRAMES = {
    5,
    "Daisy",
    19544,
-   312
+   313
   ],
   [
    3,
    "Diddy",
    35766,
-   504
+   505
   ],
   [
    39,
@@ -214,7 +214,7 @@ window.MSSB_FRAMES = {
    2,
    "DK",
    105838,
-   1939
+   1940
   ],
   [
    51,
@@ -226,7 +226,7 @@ window.MSSB_FRAMES = {
    49,
    "Dry Bones(G)",
    44965,
-   1053
+   1054
   ],
   [
    48,
@@ -268,7 +268,7 @@ window.MSSB_FRAMES = {
    1,
    "Luigi",
    91547,
-   1540
+   1542
   ],
   [
    33,
@@ -286,7 +286,7 @@ window.MSSB_FRAMES = {
    34,
    "Magikoopa(R)",
    21212,
-   250
+   251
   ],
   [
    36,
@@ -352,7 +352,7 @@ window.MSSB_FRAMES = {
    38,
    "Petey",
    93869,
-   1548
+   1550
   ],
   [
    21,
@@ -448,7 +448,7 @@ window.MSSB_FRAMES = {
    11,
    "Waluigi",
    98729,
-   1728
+   1730
   ],
   [
    10,
@@ -460,7 +460,7 @@ window.MSSB_FRAMES = {
    6,
    "Yoshi",
    104054,
-   1589
+   1591
   ]
  ],
  "final": {
@@ -507,7 +507,7 @@ window.MSSB_FRAMES = {
   "tag_set_ids": [
    223
   ],
-  "contacts": 30367,
-  "built_at": "2026-09-15T21:04:58+00:00"
+  "contacts": 30386,
+  "built_at": "2026-09-15T21:07:27+00:00"
  }
 };
