@@ -10,6 +10,8 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 | `site/index.html` | Leaderboard page: one season, ranked by a chosen metric, with one player's sliders |
 | `site/compare.html` | Compare page: 2 to 12 season + player cards, reorderable by drag. The comparison is kept in the URL (`#c=<season>[+<season>...]~<user id>,...`) |
 | `site/profile.html` | Player profile page: record, runs, stadium and character-pick tables and tournament trophies, for a season, tournament, year or all time. Kept in the URL (`#u=<user id>&v=<view>`) |
+| `site/players.html` | All players page: the same tables for every game combined (`#v=<view>`) |
+| `site/profile.js` / `profile.css` | Code and styles shared by the two profile pages |
 | `site/data/games/` | Every game, one file per season or tournament, plus `index.js` (players, years, tournament champions) |
 | `player_games.py` | Builds `site/data/games/`; called by `build_seasons.py` |
 | `trophy_overrides.json` | Tournament champions set by hand, replacing the automatic pick |
@@ -114,6 +116,11 @@ year (the Eastern date each game ended) or all time.
   records whether they also had the most wins, the fewest losses and won the
   last game between top-rated players. To correct a pick, add
   `"<tournament slug>": "<username>"` to `trophy_overrides.json` and push.
+
+The **All players** page shows the same Stadium Record and Character Picks for
+every game combined, counting each game once for each team, so wins and losses
+always balance. Its tiles are games, players, Runs/9 across every game, the home
+team's win % and the 1st pick's win %.
 
 Games with 0 innings played (aborted uploads with zeroed rosters) are left out.
 Each tag set's games file follows the same build rules as its season file, so

@@ -244,6 +244,7 @@ def refresh(conn, discovered: list[dict], now: float, grace_seconds: int, out_di
     order += sorted(set(prev) - set(order))          # no longer discovered: kept as-is
     sets = [prev[slug] for slug in order]
     players: dict[int, dict] = {}
+    years = Counter()        # games per year, for the All players page
     trophies = []
     overrides = load_overrides()
     payloads = {}
@@ -254,6 +255,7 @@ def refresh(conn, discovered: list[dict], now: float, grace_seconds: int, out_di
         payloads[entry["slug"]] = payload
         for g in payload["games"]:
             year = day_year(g[0])
+            years[year] += 1
             for uid in (g[2], g[3]):
                 p = players.setdefault(uid, {"sets": Counter(), "years": Counter()})
                 p["sets"][n] += 1
@@ -302,6 +304,7 @@ def refresh(conn, discovered: list[dict], now: float, grace_seconds: int, out_di
         "stadiums": list(STADIUMS),
         "characters": characters,
         "sets": sets,
+        "years": dict(sorted(years.items())),
         "players": sorted(([uid, names.get(uid) or f"user {uid}", dict(p["sets"]), dict(p["years"])]
                            for uid, p in players.items()), key=lambda r: r[1].lower()),
         "trophies": trophies,

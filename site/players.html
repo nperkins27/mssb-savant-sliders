@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Player Profile · MSSB Savant Sliders</title>
+<title>All Players · MSSB Savant Sliders</title>
 <script>
 /* Apply a saved theme before the first paint, so a reload in dark mode doesn't flash light. */
 try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}
@@ -11,7 +11,7 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
 <link rel="stylesheet" href="shared.css">
 <link rel="stylesheet" href="profile.css">
 </head>
-<body data-mode="player">
+<body data-mode="all">
 <div class="wrap">
 <header>
   <div class="topbar">
@@ -20,11 +20,11 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
       <span>Dark mode</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span>
     </button>
   </div>
-  <p class="meta">Mario Superstar Baseball &mdash; a player&rsquo;s Stars Off record, by season, tournament or year</p>
+  <p class="meta">Mario Superstar Baseball &mdash; every Stars Off game, all players combined, by season, tournament or year</p>
   <nav class="tabs" aria-label="Pages">
     <a href="index.html">Leaderboard</a>
-    <a href="profile.html" aria-current="page">Player profile</a>
-    <a href="players.html">All players</a>
+    <a href="profile.html">Player profile</a>
+    <a href="players.html" aria-current="page">All players</a>
     <a href="compare.html">Compare players</a>
     <a href="frames.html">Frame results</a>
   </nav>
@@ -33,11 +33,6 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
 <div id="warn"></div>
 
 <div class="controls">
-  <div class="player-field">
-    <label for="player">Player</label>
-    <input id="player" list="player-list" autocomplete="off" spellcheck="false" placeholder="Type a username">
-    <datalist id="player-list"></datalist>
-  </div>
   <div class="view-field">
     <label for="view">Season / Tournament / Year</label>
     <select id="view"></select>
@@ -45,7 +40,7 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
 </div>
 
 <div id="profile" hidden>
-  <div class="pname"><div class="box" id="p-name">&nbsp;</div></div>
+  <div class="pname"><div class="box" id="p-name">All players</div></div>
   <p class="meta" id="p-meta"></p>
 
   <div class="tiles" id="tiles"></div>
@@ -61,8 +56,10 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
       </div>
     </div>
     <div class="table-wrap"><table class="mx" id="stadiums"></table></div>
-    <p class="note">Win % with the win&ndash;loss record. 1st pick is the team with Bowser. Peach&rsquo;s Garden has no
-      reliable draft data, so it shows overall records only, and the All stadiums 1st and 2nd pick totals leave it out.</p>
+    <p class="note">Win % with the win&ndash;loss record, counting every game once for each team. So the All games
+      Overall column is always an even split, and the Home, Away, 1st pick and 2nd pick columns show which side wins
+      more often. 1st pick is the team with Bowser. Peach&rsquo;s Garden has no reliable draft data, so it shows
+      overall records only, and the All stadiums 1st and 2nd pick totals leave it out.</p>
   </section>
 
   <section class="panel" aria-labelledby="picks-title">
@@ -74,30 +71,20 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
       </div>
     </div>
     <div class="table-wrap"><table class="mx" id="picks"></table></div>
-    <p class="note">The share of the player&rsquo;s games with each character on their team, captains included. The
-      small number under each heading is the games it covers. Click a heading to sort by it.</p>
-  </section>
-
-  <section class="panel" id="trophy-panel" aria-labelledby="trophy-title" hidden>
-    <div class="panel-head"><h2 id="trophy-title">Tournament Trophy Case</h2></div>
-    <div id="trophies"></div>
+    <p class="note">The share of teams with each character on them, captains included; every game has two teams. The
+      small number under each heading is the teams it covers. Click a heading to sort by it.</p>
   </section>
 </div>
 
 <footer>
-  Player profiles cover every Stars Off game on this site: Seasons 4 to the current season, and the Netplay
+  All players combines every Stars Off game on this site: Seasons 4 to the current season, and the Netplay
   Superstars, SLICE, Bobble and MBA Champions League tournaments. Pick all time, a year (by the date each game
   ended, US Eastern time) or one season or tournament.
-  <b>ELO</b> is the leaderboard&rsquo;s ELO for that season or tournament, so it isn&rsquo;t shown for a year or all
-  time. <b>Wins and losses</b> count every game; the rare tied game (someone quit) counts toward games only.
-  <b>Runs/9</b> and <b>Runs Against/9</b> are the runs the player&rsquo;s team scored and allowed per 27 outs, as on
-  the leaderboard.
+  Every game is counted once for each team, so wins and losses always balance; the tiles show the home team&rsquo;s
+  and the 1st pick&rsquo;s win rates instead. <b>Runs/9</b> is the runs scored per 27 outs across every game.
   <b>1st pick</b> is the team with Bowser, who always goes first outside Peach&rsquo;s Garden. Peach&rsquo;s Garden has
   no reliable draft data, so it shows overall records only, and the few games elsewhere where neither team had
-  Bowser count in the overall columns only.
-  <b>Tournament champions</b> aren&rsquo;t recorded by Rio. Each is the player with the highest final ELO in the
-  event, checked against the most wins, the fewest losses and who won the final, and corrected by hand where needed.
-  Seasons don&rsquo;t award trophies. The current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
+  Bowser count in the overall columns only. The current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
   Data: Rio netplay database.
 </footer>
 </div>
