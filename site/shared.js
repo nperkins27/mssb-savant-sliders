@@ -369,18 +369,31 @@ function loadSelection(slugs, minGames = null){
 
 /* ---- season / tournament picker ----
    A button that opens a checkbox list. Clicking a name shows just that one;
-   ticking boxes combines several. At least one always stays selected. */
+   ticking boxes combines several. At least one always stays selected.
+   Optional: only (the slugs to list; default every one), meta (a row's
+   right-hand text), allLabel (adds an "All" row, and names the selection
+   when everything listed is ticked). Calling it again on the same host
+   replaces the picker. */
 let pickerCount = 0;
-function seasonPicker(host, {selected, onChange, buttonId}){
+function seasonPicker(host, {selected, onChange, buttonId, only, meta: metaText, allLabel}){
   const uid = "pk" + (++pickerCount);
-  let current = orderSlugs(selected);
-  const meta = s => (s.final ? "" : "in progress · ") +
-    (isTournament(s) ? `${s.players} players` : `${s.qualified} qualified`);
-  const groups = [["Stars Off seasons", s=>!isTournament(s)],
+  const pool = only ? seasons.filter(s=>only.includes(s.slug)) : seasons;
+  const inPool = slugs=>orderSlugs(slugs).filter(sl=>pool.some(s=>s.slug === sl));
+  let current = inPool(selected);
+  if(!current.length && allLabel) current = pool.map(s=>s.slug);
+  const everything = ()=>current.length === pool.length;
+  const meta = metaText || (s => (s.final ? "" : "in progress · ") +
+    (isTournament(s) ? `${s.players} players` : `${s.qualified} qualified`));
+  const allRow = allLabel ? `
+        <div class="picker-row">
+          <input type="checkbox" id="${uid}-all" data-all aria-label="${esc(allLabel)}">
+          <button type="button" class="picker-name" data-all><b>${esc(allLabel)}</b></button>
+        </div>` : "";
+  const groups = allRow + [["Stars Off seasons", s=>!isTournament(s)],
                   ...TOURNAMENT_SERIES.map(([key, , heading])=>[heading,
                                                                 s=>isTournament(s) && seriesKey(s) === key])]
     .map(([title, keep])=>{
-      const list = seasons.filter(keep);
+      const list = pool.filter(keep);
       return list.length ? `<div class="picker-group-title">${esc(title)}</div>` + list.map(s=>`
         <div class="picker-row">
           <input type="checkbox" id="${uid}-${esc(s.slug)}" value="${esc(s.slug)}" aria-label="${esc(s.name)}">
@@ -402,9 +415,12 @@ function seasonPicker(host, {selected, onChange, buttonId}){
         hint = host.querySelector(".picker-hint"), label = host.querySelector(".picker-label");
 
   const sync = ()=>{
-    host.querySelectorAll("input[type=checkbox]").forEach(cb=>{ cb.checked = current.includes(cb.value); });
-    label.textContent = selectionLabel(current);
-    btn.title = current.map(sl=>bySlug[sl].name).join(", ");
+    host.querySelectorAll("input[type=checkbox]").forEach(cb=>{
+      cb.checked = cb.dataset.all !== undefined ? everything() : current.includes(cb.value);
+    });
+    const all = allLabel && everything() && pool.length > 1;
+    label.textContent = all ? allLabel : selectionLabel(current);
+    btn.title = all ? allLabel : current.map(sl=>bySlug[sl].name).join(", ");
   };
   const emit = ()=>{ sync(); onChange(current.slice()); };
   const open = ()=>{
@@ -429,27 +445,33 @@ function seasonPicker(host, {selected, onChange, buttonId}){
   panel.addEventListener("change", e=>{
     const cb = e.target;
     if(cb.type !== "checkbox") return;
-    if(!cb.checked && current.length === 1){
+    const isAll = cb.dataset.all !== undefined;
+    if(!cb.checked && (isAll || current.length === 1)){
       cb.checked = true;
-      hint.textContent = "At least one season or tournament has to stay selected.";
+      hint.textContent = "At least one season or tournament has to stay selected. Click a name to show just that one.";
       hint.classList.add("picker-warn");
       return;
     }
-    current = cb.checked ? orderSlugs([...current, cb.value]) : current.filter(sl=>sl !== cb.value);
+    current = isAll ? pool.map(s=>s.slug)
+      : cb.checked ? inPool([...current, cb.value]) : current.filter(sl=>sl !== cb.value);
     emit();
   });
   panel.addEventListener("click", e=>{
     const name = e.target.closest(".picker-name");
     if(!name) return;
-    current = [name.dataset.slug];
+    current = name.dataset.all !== undefined ? pool.map(s=>s.slug) : [name.dataset.slug];
     emit();
     close(true);
   });
-  document.addEventListener("pointerdown", e=>{ if(!host.contains(e.target)) close(); });
-  host.addEventListener("keydown", e=>{ if(e.key === "Escape"){ e.stopPropagation(); close(true); } });
+  /* One outside-click listener per host, even when the picker is rebuilt. */
+  if(host._pickerOutside) document.removeEventListener("pointerdown", host._pickerOutside);
+  host._pickerOutside = e=>{ if(!host.contains(e.target)) close(); };
+  document.addEventListener("pointerdown", host._pickerOutside);
+  host.onkeydown = e=>{ if(e.key === "Escape"){ e.stopPropagation(); close(true); } };
 
   sync();
-  return {get: ()=>current.slice(), set: slugs=>{ current = orderSlugs(slugs); sync(); }, close};
+  return {get: ()=>current.slice(), set: slugs=>{ current = inPool(slugs); sync(); }, close,
+          all: everything};
 }
 
 /* ---- metric definitions dialog ---- */

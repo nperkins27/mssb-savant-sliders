@@ -9,8 +9,8 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 |---|---|
 | `site/index.html` | Leaderboard page: one season, ranked by a chosen metric, with one player's sliders |
 | `site/compare.html` | Compare page: 2 to 12 season + player cards, reorderable by drag. The comparison is kept in the URL (`#c=<season>[+<season>...]~<user id>,...`) |
-| `site/profile.html` | Player profile page: record, runs, stadium and character-pick tables and tournament trophies, for a season, tournament, year or all time. Kept in the URL (`#u=<user id>&v=<view>`) |
-| `site/players.html` | All players page: the same tables for every game combined (`#v=<view>`) |
+| `site/profile.html` | Player profile page: record, runs, stadium and character-pick tables and tournament trophies, for any mix of seasons and tournaments and an optional year. Kept in the URL (`#u=<user id>&s=<slug>[+<slug>...]\|all[&y=<year>]`) |
+| `site/players.html` | All players page: the same tables for every game combined (`#s=...&y=...`) |
 | `site/profile.js` / `profile.css` | Code and styles shared by the two profile pages |
 | `site/data/games/` | Every game, one file per season or tournament, plus `index.js` (players, years, tournament champions) |
 | `player_games.py` | Builds `site/data/games/`; called by `build_seasons.py` |
@@ -97,11 +97,12 @@ combinations match `build_rows()` run on the same summed counts in Python.
 ## Player profiles
 
 The Player profile page covers every game of every season and tournament
-above, for one player, filtered to a single season or tournament, a calendar
-year (the Eastern date each game ended) or all time.
+above, for one player. Tick any mix of seasons and tournaments (all of them by
+default), and optionally pick a calendar year (the Eastern date each game
+ended) to narrow them to that year's games.
 
-- **ELO** is the leaderboard's ELO for that season or tournament, so it is
-  hidden for a year or all time. **Wins, losses, Runs/9 and Runs Against/9**
+- **ELO** is the leaderboard's ELO for a season or tournament, so it shows only
+  when exactly one is ticked and no year is picked. **Wins, losses, Runs/9 and Runs Against/9**
   are added up from the games; Runs/9 and Runs Against/9 use the same sums as
   the leaderboard.
 - **Stadium Record**: win % and record per stadium, optionally split by home and
@@ -110,8 +111,8 @@ year (the Eastern date each game ended) or all time.
   so it shows overall records only.
 - **Character Picks**: the share of the player's games with each character on
   their team, per stadium and pick, sortable by any column.
-- **Tournament Trophy Case** (a tournament, a year or all time): tournaments the
-  player won. Rio doesn't record champions, so `player_games.pick_champion()`
+- **Tournament Trophy Case** (whenever a tournament is ticked): the ticked
+  tournaments the player won. Rio doesn't record champions, so `player_games.pick_champion()`
   names the player with the highest final ELO in each finished tournament, and
   records whether they also had the most wins, the fewest losses and won the
   last game between top-rated players. To correct a pick, add

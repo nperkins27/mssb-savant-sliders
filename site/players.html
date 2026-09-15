@@ -34,8 +34,12 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
 
 <div class="controls">
   <div class="view-field">
-    <label for="view">Season / Tournament / Year</label>
-    <select id="view"></select>
+    <label for="sets-btn">Seasons / Tournaments</label>
+    <div id="sets"></div>
+  </div>
+  <div class="year-field">
+    <label for="year">Year</label>
+    <select id="year"></select>
   </div>
 </div>
 
@@ -78,8 +82,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
 
 <footer>
   All players combines every Stars Off game on this site: Seasons 4 to the current season, and the Netplay
-  Superstars, SLICE, Bobble and MBA Champions League tournaments. Pick all time, a year (by the date each game
-  ended, US Eastern time) or one season or tournament.
+  Superstars, SLICE, Bobble and MBA Champions League tournaments. Tick any mix of seasons and tournaments, and
+  pick a year to narrow them to the games played that year (by the date each game ended, US Eastern time).
   Every game is counted once for each team, so wins and losses always balance; the tiles show the home team&rsquo;s
   and the 1st pick&rsquo;s win rates instead. <b>Runs/9</b> is the runs scored per 27 outs across every game.
   <b>1st pick</b> is the team with Bowser, who always goes first outside Peach&rsquo;s Garden. Peach&rsquo;s Garden has

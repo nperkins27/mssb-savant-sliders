@@ -22,16 +22,25 @@ const plural = (n, word)=>`${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
 const ordinal = n=>{ const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
 const roster = s=>[...(s || "")].map(c=>CODE.get(c));
 
-/* The view: "all", "y2025", or a season/tournament slug. uid is null on the All players page. */
-const state = {uid: null, view: "all", side: true, pick: true, charpick: true, sort: "all"};
+/* What's shown: slugs is the ticked seasons and tournaments (null = all of
+   them), year narrows those to one calendar year (null = every year). uid is
+   null on the All players page. */
+const state = {uid: null, slugs: null, year: null, side: true, pick: true, charpick: true, sort: "all"};
+let picker = null;
 
-/* ---- the address bar keeps the page: #u=<user id>&v=<view> (just #v= for all players) ---- */
+/* ---- the address bar keeps the page: #u=<user id>&s=<slug>[+<slug>...]|all[&y=<year>]
+   (no u= for all players). Older links used v=all | v=y2025 | v=<slug>. ---- */
 function readHash(){
-  const u = location.hash.match(/[#&]u=(\d+)/), v = location.hash.match(/[#&]v=([^&]+)/);
-  return {uid: u ? +u[1] : null, view: v ? decodeURIComponent(v[1]) : null};
+  const get = key=>{ const m = location.hash.match(new RegExp(`[#&]${key}=([^&]*)`)); return m ? decodeURIComponent(m[1]) : null; };
+  const u = get("u"), s = get("s"), y = get("y"), v = get("v");
+  let slugs = s && s !== "all" ? s.split("+") : null, year = /^\d{4}$/.test(y || "") ? +y : null;
+  if(v && /^y\d{4}$/.test(v)) year = +v.slice(1);
+  else if(v && v !== "all") slugs = [v];
+  return {uid: /^\d+$/.test(u || "") ? +u : null, slugs, year};
 }
 function writeHash(){
-  history.replaceState(null, "", (MODE === "all" ? "#" : `#u=${state.uid}&`) + `v=${encodeURIComponent(state.view)}`);
+  history.replaceState(null, "", "#" + (MODE === "all" ? "" : `u=${state.uid}&`) +
+    `s=${state.slugs ? state.slugs.join("+") : "all"}` + (state.year != null ? `&y=${state.year}` : ""));
 }
 
 /* ---- data ---- */
@@ -51,15 +60,11 @@ function loadGames(slug){
   return loadingGames[slug];
 }
 
-/* The seasons and tournaments the view covers: the player's, or everyone's. */
-function setsInView(player, view){
-  const played = player ? SETS.filter((s, i)=>player[2][i]) : SETS;
-  if(view === "all") return played;
-  if(view[0] === "y"){
-    const y = +view.slice(1);
-    return played.filter(s=>dayYear(s.first_day) <= y && dayYear(s.last_day) >= y);
-  }
-  return played.filter(s=>s.slug === view);
+/* The seasons and tournaments to load: the player's (or everyone's), the
+   ticked ones, and only those with games in the chosen year. */
+function setsInView(player, slugs, year){
+  return SETS.filter((s, i)=>(!player || player[2][i]) && (!slugs || slugs.includes(s.slug)) &&
+    (year == null || (dayYear(s.first_day) <= year && dayYear(s.last_day) >= year)));
 }
 
 /* Add up games from one side's point of view: record, runs, stadium records
@@ -119,7 +124,7 @@ function init(){
       <code>python build_seasons.py</code> to generate <code>site/data/games/</code>.</div>`;
     return;
   }
-  document.getElementById("view").onchange = e=>{ state.view = e.target.value; render(); };
+  document.getElementById("year").onchange = e=>{ state.year = e.target.value ? +e.target.value : null; render(); };
   document.querySelectorAll(".switch[data-split]").forEach(btn=>{
     btn.onclick = ()=>{
       const key = btn.dataset.split;
@@ -131,9 +136,8 @@ function init(){
   const want = readHash();
 
   if(MODE === "all"){
-    fillViewMenu(null);
-    if(want.view && [...document.getElementById("view").options].some(o=>o.value === want.view)) state.view = want.view;
-    document.getElementById("view").value = state.view;
+    Object.assign(state, {slugs: want.slugs, year: want.year});
+    buildFilters(null);
     render();
     return;
   }
@@ -156,7 +160,7 @@ function init(){
   input.addEventListener("keydown", e=>{ if(e.key === "Enter") choose(); });
 
   if(want.uid != null && playerById.has(want.uid)){
-    if(want.view) state.view = want.view;
+    Object.assign(state, {slugs: want.slugs, year: want.year});
     selectPlayer(want.uid);
     return;
   }
@@ -169,20 +173,27 @@ function init(){
   }, ()=>{ if(state.uid == null) selectPlayer(GI.players[0][0]); });
 }
 
-/* The view menu: all time, years, seasons, then tournaments by series, with
-   game counts -- the player's own, or every game on the All players page. */
-function fillViewMenu(player){
-  const option = (value, label, n)=>`<option value="${esc(value)}">${esc(label)} (${plural(n, "game")})</option>`;
+/* The filters: a multi-select of seasons and tournaments and a year menu,
+   listing only what the player played (everything on the All players page),
+   with game counts. The current choice carries over where it still applies. */
+function buildFilters(player){
+  const games = s=>{ const set = setBySlug.get(s.slug); return set ? (player ? player[2][set.idx] || 0 : set.games) : 0; };
+  const listed = SETS.filter((s, i)=>player ? player[2][i] : s.games).map(s=>s.slug);
+  const kept = state.slugs && MSSB.orderSlugs(state.slugs).filter(sl=>listed.includes(sl));
+  state.slugs = kept && kept.length && kept.length < listed.length ? kept : null;
+  picker = MSSB.seasonPicker(document.getElementById("sets"), {
+    buttonId: "sets-btn", only: listed, selected: state.slugs || listed,
+    allLabel: "All seasons and tournaments",
+    meta: s=>plural(games(s), "game") + (setBySlug.get(s.slug).final ? "" : " · in progress"),
+    onChange: slugs=>{ state.slugs = picker.all() ? null : slugs; render(); },
+  });
   const years = Object.entries(player ? player[3] : GI.years).sort((a, b)=>b[0] - a[0]);
-  const played = SETS.map((s, i)=>[s, player ? player[2][i] : s.games]).filter(([, n])=>n).reverse();   /* newest first */
-  const total = played.reduce((t, [, n])=>t + n, 0);
-  const seasons = played.filter(([s])=>s.kind === "season");
-  const groups = MSSB.TOURNAMENT_SERIES.map(([key, , heading])=>
-    [heading, played.filter(([s])=>s.kind === "tournament" && s.series === key)]).filter(([, list])=>list.length);
-  document.getElementById("view").innerHTML = option("all", "All time", total) +
-    `<optgroup label="Years">${years.map(([y, n])=>option("y" + y, y, n)).join("")}</optgroup>` +
-    (seasons.length ? `<optgroup label="Stars Off seasons">${seasons.map(([s, n])=>option(s.slug, s.name, n)).join("")}</optgroup>` : "") +
-    groups.map(([heading, list])=>`<optgroup label="${esc(heading)}">${list.map(([s, n])=>option(s.slug, s.name, n)).join("")}</optgroup>`).join("");
+  const total = years.reduce((t, [, n])=>t + n, 0);
+  if(!years.some(([y])=>+y === state.year)) state.year = null;
+  const select = document.getElementById("year");
+  select.innerHTML = `<option value="">All years (${plural(total, "game")})</option>` +
+    years.map(([y, n])=>`<option value="${y}">${y} (${plural(n, "game")})</option>`).join("");
+  select.value = state.year == null ? "" : String(state.year);
 }
 
 function selectPlayer(uid){
@@ -190,30 +201,30 @@ function selectPlayer(uid){
   state.uid = uid;
   document.getElementById("player").value = player[1];
   document.getElementById("warn").innerHTML = "";
-  fillViewMenu(player);   /* only what this player played */
-  const select = document.getElementById("view");
-  state.view = [...select.options].some(o=>o.value === state.view) ? state.view : "all";
-  select.value = state.view;
+  buildFilters(player);
   render();
 }
 
-let current = null;   /* what's on screen: {player, S, view, sets, single, year} */
+/* One season or tournament ticked, or null. */
+const onlyOne = ()=>state.slugs && state.slugs.length === 1 ? setBySlug.get(state.slugs[0]) : null;
+
+let current = null;   /* what's on screen: {player, S, sets, year} */
 function render(){
-  const mine = ++seq, player = MODE === "all" ? null : playerById.get(state.uid), view = state.view;
-  const sets = setsInView(player, view);
+  const mine = ++seq, player = MODE === "all" ? null : playerById.get(state.uid), year = state.year;
+  const sets = setsInView(player, state.slugs, year);
   const profile = document.getElementById("profile");
   const slow = setTimeout(()=>profile.classList.add("loading"), 150);
   writeHash();
-  const single = view !== "all" && view[0] !== "y" ? setBySlug.get(view) : null;
+  /* ELO belongs to one season or tournament as a whole. */
+  const eloSet = player && year == null ? onlyOne() : null;
   Promise.all([Promise.all(sets.map(s=>loadGames(s.slug).then(d=>[s.slug, d]))),
-               single && player ? MSSB.loadSeason(single.slug).catch(()=>null) : null]).then(([loaded, season])=>{
+               eloSet ? MSSB.loadSeason(eloSet.slug).catch(()=>null) : null]).then(([loaded, season])=>{
     clearTimeout(slow);
     if(mine !== seq) return;
     profile.classList.remove("loading");
     profile.hidden = false;
-    const year = view[0] === "y" ? +view.slice(1) : null;
     const S = summarize(player ? state.uid : null, loaded, year);
-    current = {player, S, view, sets, single, year};
+    current = {player, S, sets, year, eloSet};
     drawHeader(season);
     drawTables();
     drawTrophies();
@@ -229,13 +240,15 @@ const tile = (label, value, sub)=>`<div class="tile"><div class="l">${label}</di
   `<div class="s">${sub}</div></div>`;
 
 function drawHeader(season){
-  const {player, S, single, year} = current;
+  const {player, S, year, eloSet} = current;
   document.getElementById("p-name").textContent = player ? player[1] : "All players";
-  const scope = single ? single.name + (single.final ? "" : " (in progress)")
-    : year != null ? String(year) : "All time";
+  const one = onlyOne();
+  const scope = (!state.slugs ? (year != null ? String(year) : "All time")
+    : (one ? one.name + (one.final ? "" : " (in progress)") : MSSB.selectionLabel(state.slugs)) +
+      (year != null ? `, ${year}` : ""));
   const parts = [S.seasons.size && plural(S.seasons.size, "season"),
                  S.tournaments.size && plural(S.tournaments.size, "tournament")].filter(Boolean);
-  const setsLine = single || !parts.length ? "" : " in " + parts.join(" and ");
+  const setsLine = one || !parts.length ? "" : " in " + parts.join(" and ");
   document.getElementById("p-meta").innerHTML = `<b>${esc(scope)}</b> &middot; ${plural(S.matches, "game")}${esc(setsLine)}` +
     (S.first != null ? ` &middot; ${esc(dayLabel(S.first))} to ${esc(dayLabel(S.last))}` : "");
 
@@ -260,7 +273,7 @@ function drawHeader(season){
     return;
   }
   let elo = "";
-  if(single){
+  if(eloSet){
     const p = season && season.byId.get(state.uid), c = p && season.cell(p, ELO);
     const sub = !c ? "not available" : c.ok
       ? `${ordinal(Math.round(c.pct))} percentile of ${c.pool}`
@@ -361,16 +374,18 @@ function drawPicks(){
   });
 }
 
-/* ---- trophy case: a tournament, a year or all time; seasons have no trophies.
-   Only on the player page. ---- */
+/* ---- trophy case: the tournaments in the selection (and year); hidden when
+   there are none, since seasons have no trophies. Only on the player page. ---- */
 const TROPHY = `<svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor"
   d="M7 2h10v2h4v3.5A4.5 4.5 0 0 1 16.9 12 5 5 0 0 1 13 14.9V18h3.5v2h-9v-2H11v-3.1A5 5 0 0 1 7.1 12 4.5 4.5 0 0 1 3 7.5V4h4V2zm0 4H5v1.5a2.5 2.5 0 0 0 2 2.45V6zm10 0v3.95a2.5 2.5 0 0 0 2-2.45V6h-2zM6 21h12v1H6z"/></svg>`;
 function drawTrophies(){
   const panel = document.getElementById("trophy-panel");
   if(!panel || !current.player) return;
-  const {S, single, year} = current, box = document.getElementById("trophies");
-  panel.hidden = !!(single && single.kind !== "tournament");
+  const {S, year} = current, box = document.getElementById("trophies");
+  const tournaments = current.sets.filter(s=>s.kind === "tournament");
+  panel.hidden = !tournaments.length;
   if(panel.hidden) return;
+  const one = onlyOne(), single = one && one.kind === "tournament" ? one : null;
   const card = t=>{
     const s = setBySlug.get(t.slug);
     return `<div class="trophy">${TROPHY}<div><div class="t-name">${esc(s.name)}</div>` +
@@ -390,7 +405,8 @@ function drawTrophies(){
     }
     return;
   }
-  const won = GI.trophies.filter(t=>t.user_id === state.uid && (year == null || t.year === year))
+  const won = GI.trophies.filter(t=>t.user_id === state.uid && tournaments.some(s=>s.slug === t.slug) &&
+                                    (year == null || t.year === year))
     .sort((a, b)=>setBySlug.get(b.slug).last_day - setBySlug.get(a.slug).last_day);
   const entered = S.tournaments.size, when = year != null ? ` in ${year}` : "";
   box.innerHTML = won.length

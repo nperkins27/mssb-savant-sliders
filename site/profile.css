@@ -1,8 +1,10 @@
 /* Shared by profile.html (one player) and players.html (all players). */
 .player-field{width:280px;max-width:100%}
-.player-field input,.view-field select{display:block;width:100%;background:var(--surface);color:var(--ink);
+.player-field input,.year-field select{display:block;width:100%;background:var(--surface);color:var(--ink);
   border:1px solid var(--line);padding:7px 9px;font-size:14px;font-family:var(--sans);min-width:0;height:34px}
 .view-field{width:320px;max-width:100%}
+.view-field .picker-btn{height:34px}
+.year-field{width:200px;max-width:100%}
 .player-field input:focus-visible{outline:2px solid var(--boxline);outline-offset:1px}
 
 .pname .box{background:var(--chrome);border:1px solid var(--boxborder);padding:7px 13px;font-size:26px;
