@@ -45,6 +45,13 @@
   --heat-ink-5:#fff; --heat-ink-6:#fff; --heat-ink-7:#fff;
   --heat-total:#d6d6d6;
   --trophy:#9a6b00;         /* trophy case icon, 3.8:1 on the panel */
+  /* Win rates: diverging around 50%. Red below, blue above (the heat ramp's
+     steps), a neutral midpoint, three steps each way; the red steps match the
+     blue ones' lightness. Each ink clears 4.5:1 on its step. */
+  --wr-n3:#b13f3c; --wr-n2:#ea9a93; --wr-n1:#fad6d2; --wr-0:#f0efec;
+  --wr-p1:#cde2fb; --wr-p2:#86b6ef; --wr-p3:#256abf;
+  --wr-ink-n3:#fff; --wr-ink-n2:#1c1c1c; --wr-ink-n1:#1c1c1c; --wr-ink-0:#1c1c1c;
+  --wr-ink-p1:#1c1c1c; --wr-ink-p2:#1c1c1c; --wr-ink-p3:#fff;
   --serif:Georgia,"Times New Roman",serif;
   --sans:Arial,Helvetica,-apple-system,"Segoe UI",sans-serif;
 }
@@ -65,6 +72,10 @@
     --heat-ink-5:#1b1d20; --heat-ink-6:#1b1d20; --heat-ink-7:#1b1d20;
     --heat-total:#33373d;
     --trophy:#e3b341;
+    --wr-n3:#f1aea8; --wr-n2:#dc615a; --wr-n1:#762221; --wr-0:#383835;
+    --wr-p1:#104281; --wr-p2:#3987e5; --wr-p3:#9ec5f4;
+    --wr-ink-n3:#1b1d20; --wr-ink-n2:#1b1d20; --wr-ink-n1:#e4e6e8; --wr-ink-0:#e4e6e8;
+    --wr-ink-p1:#e4e6e8; --wr-ink-p2:#1b1d20; --wr-ink-p3:#1b1d20;
   }
 }
 :root[data-theme="dark"]{
@@ -83,6 +94,10 @@
   --heat-ink-5:#1b1d20; --heat-ink-6:#1b1d20; --heat-ink-7:#1b1d20;
   --heat-total:#33373d;
   --trophy:#e3b341;
+  --wr-n3:#f1aea8; --wr-n2:#dc615a; --wr-n1:#762221; --wr-0:#383835;
+  --wr-p1:#104281; --wr-p2:#3987e5; --wr-p3:#9ec5f4;
+  --wr-ink-n3:#1b1d20; --wr-ink-n2:#1b1d20; --wr-ink-n1:#e4e6e8; --wr-ink-0:#e4e6e8;
+  --wr-ink-p1:#e4e6e8; --wr-ink-p2:#1b1d20; --wr-ink-p3:#1b1d20;
 }
 
 *{box-sizing:border-box}

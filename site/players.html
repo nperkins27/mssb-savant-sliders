@@ -88,6 +88,23 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
       small number under each heading is the teams it covers. Click a heading to sort by it. With color variants
       grouped, a row such as Bro (all) is the share of teams with at least one of them.</p>
   </section>
+
+  <section class="panel" aria-labelledby="wins-title">
+    <div class="panel-head">
+      <h2 id="wins-title">Character Win Rates</h2>
+      <div class="switches">
+        <button type="button" class="switch" role="switch" aria-checked="false" data-split="winvariants">
+          <span>Group color variants</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span></button>
+        <button type="button" class="switch" role="switch" aria-checked="false" data-split="winpick">
+          <span>1st / 2nd pick</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span></button>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="mx" id="wins"></table></div>
+    <div class="wr-legend" id="wins-legend"></div>
+    <p class="note">How often a team with each character on it wins, captains included, counting decided games only;
+      across every team the average is 50%. Hover a cell for the record. The small number under each heading is the
+      teams it covers. Click a heading to sort by it; characters with too few games in that column sort last.</p>
+  </section>
 </div>
 
 <footer>

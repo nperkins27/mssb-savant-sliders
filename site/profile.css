@@ -57,6 +57,21 @@ table.mx{border-collapse:separate;border-spacing:2px;font-variant-numeric:tabula
 .h7{background:var(--heat-7)!important;color:var(--heat-ink-7)!important}
 .note{color:var(--muted);font-size:12px;margin:8px 0 0;line-height:1.5}
 
+#wins{min-width:560px}
+#wins td{font-size:13px;padding:5px 7px}
+#wins td.thin{color:var(--na)}
+.wrn3{background:var(--wr-n3)!important;color:var(--wr-ink-n3)!important}
+.wrn2{background:var(--wr-n2)!important;color:var(--wr-ink-n2)!important}
+.wrn1{background:var(--wr-n1)!important;color:var(--wr-ink-n1)!important}
+.wr0{background:var(--wr-0)!important;color:var(--wr-ink-0)!important}
+.wrp1{background:var(--wr-p1)!important;color:var(--wr-ink-p1)!important}
+.wrp2{background:var(--wr-p2)!important;color:var(--wr-ink-p2)!important}
+.wrp3{background:var(--wr-p3)!important;color:var(--wr-ink-p3)!important}
+.wr-legend{display:flex;flex-wrap:wrap;align-items:center;gap:4px 3px;margin-top:10px;font-size:12px;color:var(--muted)}
+.wr-legend .sw{display:inline-block;padding:1px 7px;font-size:11px;font-variant-numeric:tabular-nums}
+.wr-legend .lbl{margin-right:6px}
+.wr-legend .after{margin-left:8px}
+
 .trophies{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:10px}
 .trophy{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);padding:10px 12px}
 .trophy svg{flex:none;color:var(--trophy)}

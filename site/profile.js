@@ -43,7 +43,7 @@ const roster = s=>[...(s || "")].map(c=>CODE.get(c));
    them), year narrows those to one calendar year (null = every year). uid is
    null on the All players page. */
 const state = {uid: null, slugs: null, year: null, top: false, side: true, pick: true, charpick: true, variants: false,
-               sort: "all"};
+               sort: "all", winpick: false, winvariants: false, winsort: "all"};
 let picker = null;
 
 /* ---- top players (All players page): games between top players, as
@@ -111,9 +111,19 @@ function summarize(uid, loaded, year, top = false){
   const picks = {all: bucket(), stad: GI.stadiums.map(()=>({all: bucket(), 1: bucket(), 2: bucket()}))};
   const S = {games: 0, matches: 0, w: 0, l: 0, t: 0, rs: 0, ob: 0, ra: 0, of: 0, stad, picks, players: new Set(),
              seasons: new Set(), tournaments: new Set(), first: null, last: null};
-  const bump = (map, key)=>map.set(key, (map.get(key) || 0) + 1);
+  /* Per character (or variant group): games with it on the team (n), and the team's wins and losses. */
+  const tally = (map, key, res)=>{
+    let r = map.get(key);
+    if(!r) map.set(key, r = {n: 0, w: 0, l: 0});
+    r.n++;
+    if(res === "w") r.w++; else if(res === "l") r.l++;
+  };
   /* chars: the characters on the team; groups: their variant groups, each once. */
-  const addPick = (b, chars, groups)=>{ b.games++; chars.forEach(c=>bump(b.chars, c)); groups.forEach(k=>bump(b.groups, k)); };
+  const addPick = (b, chars, groups, res)=>{
+    b.games++;
+    chars.forEach(c=>tally(b.chars, c, res));
+    groups.forEach(k=>tally(b.groups, k, res));
+  };
   for(const [slug, d] of loaded){
     const set = setBySlug.get(slug), kind = set.kind;
     for(let i = 0; i < d.games.length; i++){
@@ -138,9 +148,9 @@ function summarize(uid, loaded, year, top = false){
         S.ra += g[F[me + "_runs_allowed"]]; S.of += g[F[me + "_outs"]];
         for(const side of ["all", me]) for(const pk of ["all", pick]) if(pk != null) stad[st][side][pk][res]++;
         const chars = new Set(mine), groups = new Set([...chars].map(c=>VARIANT.group.get(c) ?? c));
-        addPick(picks.all, chars, groups);
-        addPick(picks.stad[st].all, chars, groups);
-        if(pick) addPick(picks.stad[st][pick], chars, groups);
+        addPick(picks.all, chars, groups, res);
+        addPick(picks.stad[st].all, chars, groups, res);
+        if(pick) addPick(picks.stad[st][pick], chars, groups, res);
       }
       (kind === "tournament" ? S.tournaments : S.seasons).add(slug);
       S.first = S.first == null ? g[F.day] : Math.min(S.first, g[F.day]);
@@ -348,6 +358,7 @@ function drawTables(){
   if(!current) return;
   drawStadiums();
   drawPicks();
+  drawWins();
 }
 
 /* ---- stadium record ---- */
@@ -379,34 +390,41 @@ function drawStadiums(){
     row("All stadiums", sum, false, "total") + `</tbody>`;
 }
 
-/* ---- character picks ---- */
-function drawPicks(){
-  const {S} = current, peach = GI.peachs_garden;
-  const unit = MODE === "all" ? "teams" : "g";
-  /* Columns: all games, then each stadium, split by pick where the draft is known. */
+/* ---- character tables (picks and win rates) ----
+   Both have a column for all games, then one per stadium, split into 1st and
+   2nd pick where the draft is known; rows are characters, or colour-variant
+   groups. Each table has its own switches and sort (state keys in opts). */
+function charColumns(S, split){
   const cols = [{key: "all", group: null, label: "All games", b: S.picks.all}];
   GI.stadiums.forEach((name, i)=>{
-    if(state.charpick && i !== peach){
+    if(split && i !== GI.peachs_garden){
       cols.push({key: `s${i}p1`, group: name, label: "1st", b: S.picks.stad[i][1]},
                 {key: `s${i}p2`, group: name, label: "2nd", b: S.picks.stad[i][2]});
     } else {
-      cols.push({key: `s${i}`, group: name, label: state.charpick ? "All" : name, b: S.picks.stad[i].all});
+      cols.push({key: `s${i}`, group: name, label: split ? "All" : name, b: S.picks.stad[i].all});
     }
   });
-  if(!cols.some(c=>c.key === state.sort)) state.sort = "all";
-  const sortCol = cols.find(c=>c.key === state.sort);
-  /* Rows are characters, or variant groups when grouped. */
-  const counts = b=>state.variants ? b.groups : b.chars;
-  const nameOf = key=>(state.variants ? VARIANT.label.get(key) : CHAR.get(key)) ?? `Character ${key}`;
-  const rate = (b, key)=>b.games ? (counts(b).get(key) || 0) / b.games : null;
-  const rows = [...counts(S.picks.all).keys()].sort((a, b)=>
-    (rate(sortCol.b, b) ?? -1) - (rate(sortCol.b, a) ?? -1) ||
-    rate(S.picks.all, b) - rate(S.picks.all, a) || String(nameOf(a)).localeCompare(String(nameOf(b))));
+  return cols;
+}
+const colWhere = c=>c.key === "all" ? "all games"
+  : c.group + (c.label === "1st" ? ", 1st pick" : c.label === "2nd" ? ", 2nd pick" : "");
 
-  const sortBtn = c=>`<button type="button" class="sort" data-sort="${c.key}"${c.key === state.sort ? ` aria-sort="descending"` : ""}>` +
-    `${esc(c.label)}${c.key === state.sort ? " &#9662;" : ""}<span class="n">${c.b.games.toLocaleString()} ${unit}</span></button>`;
+function drawCharTable(tableId, {split, variants, sortKey}, row, compare, redraw){
+  const {S} = current;
+  const cols = charColumns(S, state[split]);
+  if(!cols.some(c=>c.key === state[sortKey])) state[sortKey] = "all";
+  const sortCol = cols.find(c=>c.key === state[sortKey]);
+  const records = b=>state[variants] ? b.groups : b.chars;
+  const nameOf = key=>(state[variants] ? VARIANT.label.get(key) : CHAR.get(key)) ?? `Character ${key}`;
+  const keys = [...records(S.picks.all).keys()].sort((a, b)=>
+    compare(records, sortCol.b, a, b) || records(S.picks.all).get(b).n - records(S.picks.all).get(a).n ||
+    String(nameOf(a)).localeCompare(String(nameOf(b))));
+
+  const unit = MODE === "all" ? "teams" : "g";
+  const sortBtn = c=>`<button type="button" class="sort" data-sort="${c.key}"${c.key === state[sortKey] ? ` aria-sort="descending"` : ""}>` +
+    `${esc(c.label)}${c.key === state[sortKey] ? " &#9662;" : ""}<span class="n">${c.b.games.toLocaleString()} ${unit}</span></button>`;
   let head;
-  if(state.charpick){
+  if(state[split]){
     const spans = [];
     cols.slice(1).forEach(c=>{ const last = spans[spans.length - 1];
       if(last && last.group === c.group) last.n++; else spans.push({group: c.group, n: 1}); });
@@ -416,22 +434,53 @@ function drawPicks(){
   } else {
     head = `<tr><th></th>${cols.map(c=>`<th>${sortBtn(c)}</th>`).join("")}</tr>`;
   }
-  const noun = MODE === "all" ? "teams" : "games";
-  const td = (c, key)=>{
-    if(!c.b.games) return `<td class="na">—</td>`;
-    const n = counts(c.b).get(key) || 0, r = n / c.b.games;
-    const step = r ? Math.max(1, Math.ceil(r * STEPS)) : 0;
-    const where = c.key === "all" ? "all games" : c.group + (c.label === "1st" ? ", 1st pick" : c.label === "2nd" ? ", 2nd pick" : "");
-    return `<td class="${step ? "h" + step : "zero"}" title="${esc(`${nameOf(key)}: ${n.toLocaleString()} of ${c.b.games.toLocaleString()} ${noun} (${where})`)}">` +
-           `${Math.round(r * 100)}%</td>`;
-  };
-  const table = document.getElementById("picks");
+  const table = document.getElementById(tableId);
   table.innerHTML = `<thead>${head}</thead><tbody>` +
-    rows.map(key=>`<tr><th scope="row">${esc(nameOf(key))}</th>${cols.map(c=>td(c, key)).join("")}</tr>`).join("") +
+    keys.map(key=>`<tr><th scope="row">${esc(nameOf(key))}</th>` +
+      cols.map(c=>c.b.games ? row(c, records(c.b).get(key), nameOf(key)) : `<td class="na">—</td>`).join("") + `</tr>`).join("") +
     `</tbody>`;
   table.querySelectorAll(".sort").forEach(btn=>{
-    btn.onclick = ()=>{ state.sort = btn.dataset.sort; drawPicks(); table.querySelector(`[data-sort="${state.sort}"]`).focus(); };
+    btn.onclick = ()=>{ state[sortKey] = btn.dataset.sort; redraw(); table.querySelector(`[data-sort="${state[sortKey]}"]`).focus(); };
   });
+}
+
+/* Picks: the share of games (teams) with the character on the team. */
+function drawPicks(){
+  const noun = MODE === "all" ? "teams" : "games";
+  const rate = (records, b, key)=>b.games ? ((records(b).get(key) || {}).n || 0) / b.games : null;
+  drawCharTable("picks", {split: "charpick", variants: "variants", sortKey: "sort"}, (c, r, name)=>{
+    const n = r ? r.n : 0, share = n / c.b.games;
+    const step = share ? Math.max(1, Math.ceil(share * STEPS)) : 0;
+    return `<td class="${step ? "h" + step : "zero"}" title="${esc(`${name}: ${n.toLocaleString()} of ${c.b.games.toLocaleString()} ${noun} (${colWhere(c)})`)}">` +
+           `${Math.round(share * 100)}%</td>`;
+  }, (records, b, x, y)=>(rate(records, b, y) ?? -1) - (rate(records, b, x) ?? -1), drawPicks);
+}
+
+/* Win rates: wins over decided games with the character on the team, shaded
+   by how far above (blue) or below (red) 50% it is. Cells with too few
+   decided games stay unshaded and sort after the rest. */
+const WIN_MIN_DECIDED = 10;
+const WIN_BANDS = [2, 5, 10];   /* percentage points from 50%: neutral below the first, then steps 1-3 */
+function drawWins(){
+  const decided = r=>r ? r.w + r.l : 0;
+  const winRate = (records, b, key)=>{ const r = records(b).get(key); return decided(r) ? r.w / decided(r) : null; };
+  const solid = (records, b, key)=>decided(records(b).get(key)) >= WIN_MIN_DECIDED;
+  drawCharTable("wins", {split: "winpick", variants: "winvariants", sortKey: "winsort"}, (c, r, name)=>{
+    if(!decided(r)) return `<td class="na" title="${esc(`${name}: no decided games (${colWhere(c)})`)}">—</td>`;
+    const rate = r.w / decided(r), off = (rate - 0.5) * 100, thin = decided(r) < WIN_MIN_DECIDED;
+    const step = WIN_BANDS.filter(band=>Math.abs(off) >= band).length;
+    const cls = thin ? "thin" : step ? (off > 0 ? "wrp" : "wrn") + step : "wr0";
+    const tied = r.n - decided(r);
+    return `<td class="${cls}" title="${esc(`${name}: ${r.w.toLocaleString()}–${r.l.toLocaleString()}` +
+      (tied ? `, ${tied} tied` : "") + ` (${colWhere(c)})` + (thin ? `, fewer than ${WIN_MIN_DECIDED} decided games` : ""))}">` +
+      `${(rate * 100).toFixed(1)}%</td>`;
+  }, (records, b, x, y)=>(solid(records, b, y) - solid(records, b, x)) ||
+                         (winRate(records, b, y) ?? -1) - (winRate(records, b, x) ?? -1), drawWins);
+  const [a, bb, c] = WIN_BANDS, chip = (cls, text)=>`<span class="sw ${cls}">${text}</span>`;
+  document.getElementById("wins-legend").innerHTML = `<span class="lbl">Win rate</span>` +
+    chip("wrn3", `under ${50 - c}%`) + chip("wrn2", `${50 - c}–${50 - bb}%`) + chip("wrn1", `${50 - bb}–${50 - a}%`) +
+    chip("wr0", `${50 - a}–${50 + a}%`) + chip("wrp1", `${50 + a}–${50 + bb}%`) + chip("wrp2", `${50 + bb}–${50 + c}%`) +
+    chip("wrp3", `${50 + c}%+`) + `<span class="after">Unshaded: fewer than ${WIN_MIN_DECIDED} decided games.</span>`;
 }
 
 /* ---- trophy case: the tournaments in the selection (and year); hidden when

@@ -114,6 +114,11 @@ ended) to narrow them to that year's games.
   color variants (Bro(H), Bro(F) and Bro(B) become Bro (all), the share of games
   with at least one of them); variants are any characters whose names differ
   only by the part in parentheses.
+- **Character Win Rates**: win % of decided games with each character on the
+  team, per stadium (optionally split by pick, and with color variants
+  grouped), sortable by any column. Cells are shaded from red (below 50%)
+  through neutral to blue (above 50%) in bands 2, 5 and 10 points from 50%;
+  cells with fewer than 10 decided games are left unshaded and sort last.
 - **Tournament Trophy Case** (whenever a tournament is ticked): the ticked
   tournaments the player won. Rio doesn't record champions, so `player_games.pick_champion()`
   names the player with the highest final ELO in each finished tournament, and
