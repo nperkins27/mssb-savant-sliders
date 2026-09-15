@@ -202,7 +202,7 @@ window.MSSB_FRAMES = {
    3,
    "Diddy",
    35766,
-   513
+   514
   ],
   [
    39,
@@ -226,7 +226,7 @@ window.MSSB_FRAMES = {
    49,
    "Dry Bones(G)",
    44965,
-   1054
+   1055
   ],
   [
    48,
@@ -507,7 +507,7 @@ window.MSSB_FRAMES = {
   "tag_set_ids": [
    223
   ],
-  "contacts": 30546,
-  "built_at": "2026-09-15T21:56:22+00:00"
+  "contacts": 30548,
+  "built_at": "2026-09-15T22:02:57+00:00"
  }
 };
