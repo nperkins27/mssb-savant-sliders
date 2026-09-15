@@ -53,12 +53,7 @@ const DEFINITIONS = {
     "contacts that are nice or perfect rather than sour. Counts every character, captain or not.",
   bat_star_slug_efficiency:
     "Bases gained per star used on star swings. Every star swing counts, whether or not it ends the at-bat: " +
-    "a miss, foul or out adds its stars and no bases, and a single, double, triple or home run adds 1, 2, 3 or 4 bases. " +
-    "A star swing uses 1 star, except that a captain-eligible character (Mario, Luigi, Peach, Daisy, Yoshi, Birdo, " +
-    "Wario, Waluigi, DK, Diddy, Bowser, Bowser Jr) who isn't the team's captain uses 2 stars when they make contact, " +
-    "fouls included. For example, a star swing miss (0 bases, 1 star), a double by a non-captain Mario (2 bases, " +
-    "2 stars), a double by the captain (2 bases, 1 star) and a single by Toad (1 base, 1 star) total 5 bases for " +
-    "5 stars: 1.000.",
+    "a miss, foul or out adds its stars and no bases, and a single, double, triple or home run adds 1, 2, 3 or 4 bases.",
   bat_chase_pct:
     "Share of pitches outside the strike zone that the batter swings at.",
   bat_whiff_pct:
