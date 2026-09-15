@@ -41,7 +41,14 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
     <label for="year">Year</label>
     <select id="year"></select>
   </div>
+  <div class="top-field">
+    <label for="top-toggle">Games</label>
+    <button type="button" class="switch" id="top-toggle" role="switch" aria-checked="false">
+      <span>Top players only</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span></button>
+  </div>
 </div>
+
+<div class="mode-note" id="top-note" role="note" hidden></div>
 
 <div id="profile" hidden>
   <div class="pname"><div class="box" id="p-name">All players</div></div>
@@ -88,7 +95,11 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   and the 1st pick&rsquo;s win rates instead. <b>Runs/9</b> is the runs scored per 27 outs across every game.
   <b>1st pick</b> is the team with Bowser, who always goes first outside Peach&rsquo;s Garden. Peach&rsquo;s Garden has
   no reliable draft data, so it shows overall records only, and the few games elsewhere where neither team had
-  Bowser count in the overall columns only. The current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
+  Bowser count in the overall columns only.
+  <b>Top players only</b> keeps every MBA Champions League game, the last 6 games of every other tournament (by
+  when they ended), and season games where both players have won at least 65% of their decided games across every
+  Stars Off season and tournament here. Lifetime records include the current season, so the list of qualifying
+  players can change from day to day. The current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
   Data: Rio netplay database.
 </footer>
 </div>

@@ -121,7 +121,12 @@ ended) to narrow them to that year's games.
 The **All players** page shows the same Stadium Record and Character Picks for
 every game combined, counting each game once for each team, so wins and losses
 always balance. Its tiles are games, players, Runs/9 across every game, the home
-team's win % and the 1st pick's win %.
+team's win % and the 1st pick's win %. Its **Top players only** switch keeps
+games between top players: every MBA Champions League game, the last 6 games of
+every other tournament, and season games where both players have a lifetime win
+rate of at least 65% across every season and tournament here. The rule's
+settings are the `TOP_*` constants in `player_games.py`, and the qualifying
+players are listed on the page.
 
 Games with 0 innings played (aborted uploads with zeroed rosters) are left out.
 Each tag set's games file follows the same build rules as its season file, so

@@ -25,8 +25,20 @@ const roster = s=>[...(s || "")].map(c=>CODE.get(c));
 /* What's shown: slugs is the ticked seasons and tournaments (null = all of
    them), year narrows those to one calendar year (null = every year). uid is
    null on the All players page. */
-const state = {uid: null, slugs: null, year: null, side: true, pick: true, charpick: true, sort: "all"};
+const state = {uid: null, slugs: null, year: null, top: false, side: true, pick: true, charpick: true, sort: "all"};
 let picker = null;
+
+/* ---- top players (All players page): games between top players, as
+   defined in player_games.py -- every game of the series it names (the MBA
+   Champions League), the last few games of every other tournament, and
+   season games where both players clear the lifetime win rate. ---- */
+const TOP = GI && GI.top_players;
+const TOP_IDS = new Set(TOP ? TOP.players.map(p=>p[0]) : []);
+function topGame(set, games, i){
+  if(TOP.all_games_series.includes(set.series)) return true;
+  if(set.kind === "tournament") return i >= games.length - TOP.final_games;   /* files are in the order games ended */
+  return TOP_IDS.has(games[i][F.away]) && TOP_IDS.has(games[i][F.home]);
+}
 
 /* ---- the address bar keeps the page: #u=<user id>&s=<slug>[+<slug>...]|all[&y=<year>]
    (no u= for all players). Older links used v=all | v=y2025 | v=<slug>. ---- */
@@ -36,11 +48,12 @@ function readHash(){
   let slugs = s && s !== "all" ? s.split("+") : null, year = /^\d{4}$/.test(y || "") ? +y : null;
   if(v && /^y\d{4}$/.test(v)) year = +v.slice(1);
   else if(v && v !== "all") slugs = [v];
-  return {uid: /^\d+$/.test(u || "") ? +u : null, slugs, year};
+  return {uid: /^\d+$/.test(u || "") ? +u : null, slugs, year, top: get("top") === "1"};
 }
 function writeHash(){
   history.replaceState(null, "", "#" + (MODE === "all" ? "" : `u=${state.uid}&`) +
-    `s=${state.slugs ? state.slugs.join("+") : "all"}` + (state.year != null ? `&y=${state.year}` : ""));
+    `s=${state.slugs ? state.slugs.join("+") : "all"}` + (state.year != null ? `&y=${state.year}` : "") +
+    (state.top ? "&top=1" : ""));
 }
 
 /* ---- data ---- */
@@ -70,8 +83,8 @@ function setsInView(player, slugs, year){
 /* Add up games from one side's point of view: record, runs, stadium records
    and character picks. With a player, that's their side of each of their
    games; with uid null, both sides of every game, so every game counts once
-   for each team. */
-function summarize(uid, loaded, year){
+   for each team. top keeps only games between top players. */
+function summarize(uid, loaded, year, top = false){
   const rec = ()=>({w: 0, l: 0, t: 0});
   const stad = GI.stadiums.map(()=>({all: {all: rec(), 1: rec(), 2: rec()},
                                      home: {all: rec(), 1: rec(), 2: rec()},
@@ -82,9 +95,11 @@ function summarize(uid, loaded, year){
              seasons: new Set(), tournaments: new Set(), first: null, last: null};
   const addPick = (b, chars)=>{ b.games++; chars.forEach(c=>b.chars.set(c, (b.chars.get(c) || 0) + 1)); };
   for(const [slug, d] of loaded){
-    const kind = setBySlug.get(slug).kind;
-    for(const g of d.games){
+    const set = setBySlug.get(slug), kind = set.kind;
+    for(let i = 0; i < d.games.length; i++){
+      const g = d.games[i];
       if(year != null && dayYear(g[F.day]) !== year) continue;
+      if(top && !topGame(set, d.games, i)) continue;
       const sides = uid == null ? ["away", "home"]
         : g[F.home] === uid ? ["home"] : g[F.away] === uid ? ["away"] : [];
       if(!sides.length) continue;
@@ -136,7 +151,8 @@ function init(){
   const want = readHash();
 
   if(MODE === "all"){
-    Object.assign(state, {slugs: want.slugs, year: want.year});
+    Object.assign(state, {slugs: want.slugs, year: want.year, top: want.top && !!TOP});
+    setupTopPlayers();
     buildFilters(null);
     render();
     return;
@@ -171,6 +187,26 @@ function init(){
     const top = season.board(ELO)[0] || season.board(METRICS.find(m=>m.k === "gen_games_played"))[0];
     selectPlayer(top && playerById.has(top.id) ? top.id : GI.players[0][0]);
   }, ()=>{ if(state.uid == null) selectPlayer(GI.players[0][0]); });
+}
+
+/* The "Top players only" switch, and the note that says what it keeps and who qualifies. */
+function setupTopPlayers(){
+  const btn = document.getElementById("top-toggle"), note = document.getElementById("top-note");
+  if(!btn) return;
+  if(!TOP){ btn.disabled = true; return; }
+  const decided = TOP.min_decided > 0 ? ` with at least ${plural(TOP.min_decided, "decided game")}` : "";
+  const list = TOP.players.map(([uid, w, l])=>{
+    const name = (playerById.get(uid) || [0, `user ${uid}`])[1];
+    return `<li>${esc(name)} <span class="r">${w.toLocaleString()}&ndash;${l.toLocaleString()} (${pct(w, w + l)})</span></li>`;
+  }).join("");
+  note.innerHTML = `<b>Top players only:</b> every MBA Champions League game, the last ${TOP.final_games} games of every
+    other tournament, and season games where both players have won at least ${TOP.min_win_pct}% of their decided
+    Stars Off games${decided}, across every season and tournament on this site.
+    <details class="top-players"><summary>${plural(TOP.players.length, "player")} qualify</summary>
+    <ol class="top-list">${list}</ol></details>`;
+  const sync = ()=>{ btn.setAttribute("aria-checked", String(state.top)); note.hidden = !state.top; };
+  btn.onclick = ()=>{ state.top = !state.top; sync(); render(); };
+  sync();
 }
 
 /* The filters: a multi-select of seasons and tournaments and a year menu,
@@ -223,7 +259,7 @@ function render(){
     if(mine !== seq) return;
     profile.classList.remove("loading");
     profile.hidden = false;
-    const S = summarize(player ? state.uid : null, loaded, year);
+    const S = summarize(player ? state.uid : null, loaded, year, !player && state.top);
     current = {player, S, sets, year, eloSet};
     drawHeader(season);
     drawTables();
@@ -248,7 +284,8 @@ function drawHeader(season){
       (year != null ? `, ${year}` : ""));
   const parts = [S.seasons.size && plural(S.seasons.size, "season"),
                  S.tournaments.size && plural(S.tournaments.size, "tournament")].filter(Boolean);
-  const setsLine = one || !parts.length ? "" : " in " + parts.join(" and ");
+  const setsLine = (one || !parts.length ? "" : " in " + parts.join(" and ")) +
+    (!player && state.top ? " between top players" : "");
   document.getElementById("p-meta").innerHTML = `<b>${esc(scope)}</b> &middot; ${plural(S.matches, "game")}${esc(setsLine)}` +
     (S.first != null ? ` &middot; ${esc(dayLabel(S.first))} to ${esc(dayLabel(S.last))}` : "");
 
