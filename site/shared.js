@@ -20,7 +20,7 @@ const METRICS = [
   {k:"bat_charge_timing_pct",     label:"Charge Timing",       g:"batting",  f:"pct",                          n:"well-timed swings", d:"charge swings"},
   {k:"bat_charge_down_input_pct", label:"Charge Down-Input %", g:"batting",  f:"pct",                          n:"down inputs",       d:"contacted charge swings"},
   {k:"bat_star_swing_barrel_pct", label:"Star Swing Barrel %", g:"batting",  f:"pct",                          n:"barrels",           d:"star swing contacts"},
-  {k:"bat_star_slug_efficiency",  label:"Star Slug Efficiency", g:"batting", f:"ratio",                        n:"bases on star swings", d:"stars used",
+  {k:"bat_star_slug_efficiency",  label:"Star Slugging %",      g:"batting", f:"ratio",                        n:"bases on star swings", d:"stars used",
    nu:"bases", du:"stars"},
   {k:"bat_chase_pct",             label:"Chase %",             g:"batting",  f:"pct",                          n:"chases",            d:"out-of-zone pitches"},
   {k:"bat_ozone_contact_pct",     label:"O-Zone Contact %",    g:"batting",  f:"pct",                          n:"contacts",          d:"out-of-zone swings"},

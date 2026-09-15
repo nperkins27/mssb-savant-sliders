@@ -31,11 +31,11 @@ numbers match.
 Runs/9 and Runs Against/9 (general); 2-Strike Whiff % (batting: whiffs ÷ swings
 on pitches thrown with two strikes already in the count), Star Swing Barrel %
 (batting: Barrel % on star swing contacts only, needs 25 in a season) and Star
-Slug Efficiency (batting: bases gained on star swings ÷ stars used, needs 25
-stars used in a season); and Special Catches/9 (pitching/fielding).
+Slugging % (batting: bases gained on star swings ÷ stars used, needs 25 stars
+used in a season); and Special Catches/9 (pitching/fielding).
 Per-9 metrics are 27 × count ÷ outs: runs against and special catches over the
 outs the player's team recorded in the field, runs over the outs it made at bat.
-Star Slug Efficiency counts every star swing, including misses, fouls and outs
+Star Slugging % counts every star swing, including misses, fouls and outs
 (0 bases). A star swing uses 1 star, or 2 when a captain-eligible character who
 isn't the team's captain makes contact (fouls included).
 
