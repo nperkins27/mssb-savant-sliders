@@ -119,7 +119,7 @@ ended) to narrow them to that year's games.
   team, per stadium (optionally split by pick, and with color variants
   grouped), sortable by any column. Cells are shaded from red (below 50%)
   through neutral to blue (above 50%) in bands 2, 5 and 10 points from 50%;
-  cells with fewer than 10 decided games are left unshaded and sort last.
+  cells with fewer than 100 decided games are left unshaded and sort last.
 - **Tournament Trophy Case** (whenever a tournament is ticked): the ticked
   tournaments the player won. Rio doesn't record champions, so `player_games.pick_champion()`
   names the player with the highest final ELO in each finished tournament, and

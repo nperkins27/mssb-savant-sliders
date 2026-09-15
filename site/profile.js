@@ -459,7 +459,7 @@ function drawPicks(){
 /* Win rates: wins over decided games with the character on the team, shaded
    by how far above (blue) or below (red) 50% it is. Cells with too few
    decided games stay unshaded and sort after the rest. */
-const WIN_MIN_DECIDED = 10;
+const WIN_MIN_DECIDED = 100;
 const WIN_BANDS = [2, 5, 10];   /* percentage points from 50%: neutral below the first, then steps 1-3 */
 function drawWins(){
   const decided = r=>r ? r.w + r.l : 0;
