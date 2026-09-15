@@ -10,6 +10,23 @@ const SETS = GI ? GI.sets : [];
 const setBySlug = new Map(SETS.map((s, i)=>[s.slug, Object.assign({idx: i}, s)]));
 const playerById = new Map((GI ? GI.players : []).map(p=>[p[0], p]));
 const CHAR = GI ? new Map(GI.characters) : new Map();
+/* Colour variants share a base name: Bro(H), Bro(F) and Bro(B) are all "Bro".
+   Grouped, each character counts under "<base> (all)" when two or more share
+   its base, and as itself otherwise. */
+const VARIANT = (()=>{
+  const base = new Map(), shared = new Map(), group = new Map(), label = new Map();
+  CHAR.forEach((name, id)=>{
+    const m = String(name).match(/^(.+?)\s*\([^)]*\)$/);
+    if(m){ base.set(id, m[1]); shared.set(m[1], (shared.get(m[1]) || 0) + 1); }
+  });
+  CHAR.forEach((name, id)=>{
+    const b = base.get(id);
+    const key = b && shared.get(b) > 1 ? "v:" + b : id;
+    group.set(id, key);
+    label.set(key, key === id ? name : `${b} (all)`);
+  });
+  return {group, label};
+})();
 const CODE = GI ? new Map([...GI.roster_alphabet].map((c, i)=>[c, i])) : new Map();
 const R9 = METRICS.find(m=>m.k === "gen_runs_per_9"), RA9 = METRICS.find(m=>m.k === "gen_runs_against_per_9");
 const ELO = METRICS.find(m=>m.k === "gen_adjusted_elo");
@@ -25,7 +42,8 @@ const roster = s=>[...(s || "")].map(c=>CODE.get(c));
 /* What's shown: slugs is the ticked seasons and tournaments (null = all of
    them), year narrows those to one calendar year (null = every year). uid is
    null on the All players page. */
-const state = {uid: null, slugs: null, year: null, top: false, side: true, pick: true, charpick: true, sort: "all"};
+const state = {uid: null, slugs: null, year: null, top: false, side: true, pick: true, charpick: true, variants: false,
+               sort: "all"};
 let picker = null;
 
 /* ---- top players (All players page): games between top players, as
@@ -89,11 +107,13 @@ function summarize(uid, loaded, year, top = false){
   const stad = GI.stadiums.map(()=>({all: {all: rec(), 1: rec(), 2: rec()},
                                      home: {all: rec(), 1: rec(), 2: rec()},
                                      away: {all: rec(), 1: rec(), 2: rec()}}));
-  const bucket = ()=>({games: 0, chars: new Map()});
+  const bucket = ()=>({games: 0, chars: new Map(), groups: new Map()});
   const picks = {all: bucket(), stad: GI.stadiums.map(()=>({all: bucket(), 1: bucket(), 2: bucket()}))};
   const S = {games: 0, matches: 0, w: 0, l: 0, t: 0, rs: 0, ob: 0, ra: 0, of: 0, stad, picks, players: new Set(),
              seasons: new Set(), tournaments: new Set(), first: null, last: null};
-  const addPick = (b, chars)=>{ b.games++; chars.forEach(c=>b.chars.set(c, (b.chars.get(c) || 0) + 1)); };
+  const bump = (map, key)=>map.set(key, (map.get(key) || 0) + 1);
+  /* chars: the characters on the team; groups: their variant groups, each once. */
+  const addPick = (b, chars, groups)=>{ b.games++; chars.forEach(c=>bump(b.chars, c)); groups.forEach(k=>bump(b.groups, k)); };
   for(const [slug, d] of loaded){
     const set = setBySlug.get(slug), kind = set.kind;
     for(let i = 0; i < d.games.length; i++){
@@ -117,10 +137,10 @@ function summarize(uid, loaded, year, top = false){
         S.rs += g[F[them + "_runs_allowed"]]; S.ob += g[F[them + "_outs"]];
         S.ra += g[F[me + "_runs_allowed"]]; S.of += g[F[me + "_outs"]];
         for(const side of ["all", me]) for(const pk of ["all", pick]) if(pk != null) stad[st][side][pk][res]++;
-        const chars = new Set(mine);
-        addPick(picks.all, chars);
-        addPick(picks.stad[st].all, chars);
-        if(pick) addPick(picks.stad[st][pick], chars);
+        const chars = new Set(mine), groups = new Set([...chars].map(c=>VARIANT.group.get(c) ?? c));
+        addPick(picks.all, chars, groups);
+        addPick(picks.stad[st].all, chars, groups);
+        if(pick) addPick(picks.stad[st][pick], chars, groups);
       }
       (kind === "tournament" ? S.tournaments : S.seasons).add(slug);
       S.first = S.first == null ? g[F.day] : Math.min(S.first, g[F.day]);
@@ -375,10 +395,13 @@ function drawPicks(){
   });
   if(!cols.some(c=>c.key === state.sort)) state.sort = "all";
   const sortCol = cols.find(c=>c.key === state.sort);
-  const rate = (b, id)=>b.games ? (b.chars.get(id) || 0) / b.games : null;
-  const chars = [...S.picks.all.chars.keys()].sort((a, b)=>
+  /* Rows are characters, or variant groups when grouped. */
+  const counts = b=>state.variants ? b.groups : b.chars;
+  const nameOf = key=>(state.variants ? VARIANT.label.get(key) : CHAR.get(key)) ?? `Character ${key}`;
+  const rate = (b, key)=>b.games ? (counts(b).get(key) || 0) / b.games : null;
+  const rows = [...counts(S.picks.all).keys()].sort((a, b)=>
     (rate(sortCol.b, b) ?? -1) - (rate(sortCol.b, a) ?? -1) ||
-    rate(S.picks.all, b) - rate(S.picks.all, a) || String(CHAR.get(a)).localeCompare(String(CHAR.get(b))));
+    rate(S.picks.all, b) - rate(S.picks.all, a) || String(nameOf(a)).localeCompare(String(nameOf(b))));
 
   const sortBtn = c=>`<button type="button" class="sort" data-sort="${c.key}"${c.key === state.sort ? ` aria-sort="descending"` : ""}>` +
     `${esc(c.label)}${c.key === state.sort ? " &#9662;" : ""}<span class="n">${c.b.games.toLocaleString()} ${unit}</span></button>`;
@@ -394,17 +417,17 @@ function drawPicks(){
     head = `<tr><th></th>${cols.map(c=>`<th>${sortBtn(c)}</th>`).join("")}</tr>`;
   }
   const noun = MODE === "all" ? "teams" : "games";
-  const td = (c, id)=>{
+  const td = (c, key)=>{
     if(!c.b.games) return `<td class="na">—</td>`;
-    const n = c.b.chars.get(id) || 0, r = n / c.b.games;
+    const n = counts(c.b).get(key) || 0, r = n / c.b.games;
     const step = r ? Math.max(1, Math.ceil(r * STEPS)) : 0;
     const where = c.key === "all" ? "all games" : c.group + (c.label === "1st" ? ", 1st pick" : c.label === "2nd" ? ", 2nd pick" : "");
-    return `<td class="${step ? "h" + step : "zero"}" title="${esc(`${CHAR.get(id)}: ${n.toLocaleString()} of ${c.b.games.toLocaleString()} ${noun} (${where})`)}">` +
+    return `<td class="${step ? "h" + step : "zero"}" title="${esc(`${nameOf(key)}: ${n.toLocaleString()} of ${c.b.games.toLocaleString()} ${noun} (${where})`)}">` +
            `${Math.round(r * 100)}%</td>`;
   };
   const table = document.getElementById("picks");
   table.innerHTML = `<thead>${head}</thead><tbody>` +
-    chars.map(id=>`<tr><th scope="row">${esc(CHAR.get(id) ?? `Character ${id}`)}</th>${cols.map(c=>td(c, id)).join("")}</tr>`).join("") +
+    rows.map(key=>`<tr><th scope="row">${esc(nameOf(key))}</th>${cols.map(c=>td(c, key)).join("")}</tr>`).join("") +
     `</tbody>`;
   table.querySelectorAll(".sort").forEach(btn=>{
     btn.onclick = ()=>{ state.sort = btn.dataset.sort; drawPicks(); table.querySelector(`[data-sort="${state.sort}"]`).focus(); };

@@ -77,13 +77,16 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
     <div class="panel-head">
       <h2 id="picks-title">Character Picks</h2>
       <div class="switches">
+        <button type="button" class="switch" role="switch" aria-checked="false" data-split="variants">
+          <span>Group color variants</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span></button>
         <button type="button" class="switch" role="switch" aria-checked="true" data-split="charpick">
           <span>1st / 2nd pick</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span></button>
       </div>
     </div>
     <div class="table-wrap"><table class="mx" id="picks"></table></div>
     <p class="note">The share of teams with each character on them, captains included; every game has two teams. The
-      small number under each heading is the teams it covers. Click a heading to sort by it.</p>
+      small number under each heading is the teams it covers. Click a heading to sort by it. With color variants
+      grouped, a row such as Bro (all) is the share of teams with at least one of them.</p>
   </section>
 </div>
 

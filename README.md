@@ -110,7 +110,10 @@ ended) to narrow them to that year's games.
   goes first outside Peach's Garden. Peach's Garden has no reliable draft data,
   so it shows overall records only.
 - **Character Picks**: the share of the player's games with each character on
-  their team, per stadium and pick, sortable by any column.
+  their team, per stadium and pick, sortable by any column. A switch groups
+  color variants (Bro(H), Bro(F) and Bro(B) become Bro (all), the share of games
+  with at least one of them); variants are any characters whose names differ
+  only by the part in parentheses.
 - **Tournament Trophy Case** (whenever a tournament is ticked): the ticked
   tournaments the player won. Rio doesn't record champions, so `player_games.pick_champion()`
   names the player with the highest final ELO in each finished tournament, and
