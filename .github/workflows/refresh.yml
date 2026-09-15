@@ -23,6 +23,8 @@ on:
       - "season_metrics.py"
       - "season_metrics_sql.py"
       - "frame_results.py"
+      - "player_games.py"
+      - "trophy_overrides.json"
       - "build_seasons.py"
       - ".github/workflows/refresh.yml"
 

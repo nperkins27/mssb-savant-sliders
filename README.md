@@ -9,6 +9,10 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 |---|---|
 | `site/index.html` | Leaderboard page: one season, ranked by a chosen metric, with one player's sliders |
 | `site/compare.html` | Compare page: 2 to 12 season + player cards, reorderable by drag. The comparison is kept in the URL (`#c=<season>[+<season>...]~<user id>,...`) |
+| `site/profile.html` | Player profile page: record, runs, stadium and character-pick tables and tournament trophies, for a season, tournament, year or all time. Kept in the URL (`#u=<user id>&v=<view>`) |
+| `site/data/games/` | Every game, one file per season or tournament, plus `index.js` (players, years, tournament champions) |
+| `player_games.py` | Builds `site/data/games/`; called by `build_seasons.py` |
+| `trophy_overrides.json` | Tournament champions set by hand, replacing the automatic pick |
 | `site/frames.html` | Frame results page: what happens when a character hits the ball on each frame, with ten filters |
 | `site/data/frames/` | The frame results counts: `index.js`, plus one file per character in `final/` (finished seasons and tournaments) and `live/` (in progress) |
 | `frame_results.py` | Builds `site/data/frames/`; called by `build_seasons.py` |
@@ -87,6 +91,33 @@ a single season or tournament. In seasons the other minimums still apply; with a
 tournament selected there are none. Set to a selection's usual minimum, it
 reproduces the built files exactly. Combining a single season reproduces its built file exactly, and
 combinations match `build_rows()` run on the same summed counts in Python.
+
+## Player profiles
+
+The Player profile page covers every game of every season and tournament
+above, for one player, filtered to a single season or tournament, a calendar
+year (the Eastern date each game ended) or all time.
+
+- **ELO** is the leaderboard's ELO for that season or tournament, so it is
+  hidden for a year or all time. **Wins, losses, Runs/9 and Runs Against/9**
+  are added up from the games; Runs/9 and Runs Against/9 use the same sums as
+  the leaderboard.
+- **Stadium Record**: win % and record per stadium, optionally split by home and
+  away and by 1st and 2nd pick. 1st pick is the team with Bowser, who always
+  goes first outside Peach's Garden. Peach's Garden has no reliable draft data,
+  so it shows overall records only.
+- **Character Picks**: the share of the player's games with each character on
+  their team, per stadium and pick, sortable by any column.
+- **Tournament Trophy Case** (a tournament, a year or all time): tournaments the
+  player won. Rio doesn't record champions, so `player_games.pick_champion()`
+  names the player with the highest final ELO in each finished tournament, and
+  records whether they also had the most wins, the fewest losses and won the
+  last game between top-rated players. To correct a pick, add
+  `"<tournament slug>": "<username>"` to `trophy_overrides.json` and push.
+
+Games with 0 innings played (aborted uploads with zeroed rosters) are left out.
+Each tag set's games file follows the same build rules as its season file, so
+finished ones are never queried again.
 
 ## Frame results
 

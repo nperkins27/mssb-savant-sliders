@@ -536,7 +536,7 @@ setupThemeToggle();
 
 return {METRICS, GROUPS, GCOLOR, DEFINITIONS, seasons, bySlug, rules,
         fmt, counts, menuLabel, esc, badge, updatedLabel, whyNot, loadSeason, openDefinitions,
-        isTournament, tournamentSeries, TOURNAMENT_NOTE, latestSeason,
+        isTournament, tournamentSeries, TOURNAMENT_SERIES, TOURNAMENT_NOTE, latestSeason,
         isCombined, noMinimums, ELO_NOTE, orderSlugs, selectionKey, selectionLabel,
         loadSelection, seasonPicker, parseMinGames, DEFAULT_MIN_GAMES,
         _combine: combine, _percentileRanks: percentileRanks};

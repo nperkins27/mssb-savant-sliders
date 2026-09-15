@@ -44,6 +44,7 @@
   --heat-ink-1:#1c1c1c; --heat-ink-2:#1c1c1c; --heat-ink-3:#1c1c1c; --heat-ink-4:#1c1c1c;
   --heat-ink-5:#fff; --heat-ink-6:#fff; --heat-ink-7:#fff;
   --heat-total:#d6d6d6;
+  --trophy:#9a6b00;         /* trophy case icon, 3.8:1 on the panel */
   --serif:Georgia,"Times New Roman",serif;
   --sans:Arial,Helvetica,-apple-system,"Segoe UI",sans-serif;
 }
@@ -63,6 +64,7 @@
     --heat-ink-1:#fff; --heat-ink-2:#fff; --heat-ink-3:#fff; --heat-ink-4:#1b1d20;
     --heat-ink-5:#1b1d20; --heat-ink-6:#1b1d20; --heat-ink-7:#1b1d20;
     --heat-total:#33373d;
+    --trophy:#e3b341;
   }
 }
 :root[data-theme="dark"]{
@@ -80,6 +82,7 @@
   --heat-ink-1:#fff; --heat-ink-2:#fff; --heat-ink-3:#fff; --heat-ink-4:#1b1d20;
   --heat-ink-5:#1b1d20; --heat-ink-6:#1b1d20; --heat-ink-7:#1b1d20;
   --heat-total:#33373d;
+  --trophy:#e3b341;
 }
 
 *{box-sizing:border-box}
@@ -107,12 +110,16 @@ header h1 b{font-weight:700}
           border:1px solid var(--line);transition:background-color .15s,border-color .15s}
 .tt-knob{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
          background:var(--muted);transition:transform .15s,background-color .15s}
-.theme-toggle[aria-checked="true"] .tt-track{background:var(--blue);border-color:var(--blue)}
-.theme-toggle[aria-checked="true"] .tt-knob{transform:translateX(18px);background:#fff}
+.theme-toggle[aria-checked="true"] .tt-track,.switch[aria-checked="true"] .tt-track{background:var(--blue);border-color:var(--blue)}
+.theme-toggle[aria-checked="true"] .tt-knob,.switch[aria-checked="true"] .tt-knob{transform:translateX(18px);background:#fff}
+/* The same switch, for page options (profile table splits). */
+.switch{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid transparent;padding:4px 6px;
+        color:var(--muted);font-family:var(--sans);font-size:11px;text-transform:uppercase;letter-spacing:.7px;cursor:pointer}
+.switch:hover{color:var(--ink)}
 @media (prefers-reduced-motion: reduce){ .tt-track,.tt-knob{transition:none} }
 
 /* ---- page tabs ---- */
-.tabs{display:flex;gap:4px;margin:0 0 16px;border-bottom:1px solid var(--line)}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 16px;border-bottom:1px solid var(--line)}
 .tabs a{padding:7px 15px;color:var(--ink);text-decoration:none;font-size:13.5px;
         border:1px solid transparent;border-bottom:none;margin-bottom:-1px}
 .tabs a[aria-current="page"]{background:var(--chrome);border-color:var(--line);font-weight:700}

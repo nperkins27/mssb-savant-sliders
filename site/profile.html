@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player Profile · MSSB Savant Sliders</title>
+<script>
+/* Apply a saved theme before the first paint, so a reload in dark mode doesn't flash light. */
+try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}
+</script>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .player-field{width:280px;max-width:100%}
+  .player-field input,.view-field select{display:block;width:100%;background:var(--surface);color:var(--ink);
+    border:1px solid var(--line);padding:7px 9px;font-size:14px;font-family:var(--sans);min-width:0;height:34px}
+  .view-field{width:320px;max-width:100%}
+  .player-field input:focus-visible{outline:2px solid var(--boxline);outline-offset:1px}
+
+  .pname .box{background:var(--chrome);border:1px solid var(--boxborder);padding:7px 13px;font-size:26px;
+              line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #p-meta{margin:8px 0 14px}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:12px;margin-bottom:18px}
+  @media (max-width:560px){ .tile .v{font-size:26px} }
+  .tile{background:var(--chrome);border:1px solid var(--line);padding:12px 15px 13px;min-width:0}
+  .tile .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+  .tile .v{font-size:32px;line-height:1.2;margin-top:3px}
+  .tile .s{font-size:12px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+
+  .panel{margin-bottom:18px}
+  .panel-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 16px;margin-bottom:10px}
+  .panel-head h2{margin:0}
+  .switches{display:flex;flex-wrap:wrap;gap:4px 10px}
+
+  .table-wrap{overflow-x:auto}
+  table.mx{border-collapse:separate;border-spacing:2px;font-variant-numeric:tabular-nums;width:100%}
+  .mx th{font-weight:400;color:var(--muted);font-size:12px;padding:5px 9px;text-align:center;white-space:nowrap}
+  .mx thead th.group{color:var(--ink);font-size:12.5px;border-bottom:1px solid var(--line)}
+  .mx tbody th{text-align:left;color:var(--ink);font-size:13.5px;padding:6px 10px 6px 2px;white-space:nowrap}
+  .mx td{background:var(--surface);text-align:center;padding:6px 9px;white-space:nowrap}
+  .mx td .p{display:block;font-size:15px}
+  .mx td .r{display:block;font-size:11px;color:var(--muted)}
+  .mx td.na{color:var(--na);font-size:12px}
+  .mx tr.total th,.mx tr.total td{background:var(--heat-total)}
+  .mx tr.total th{padding-left:10px}
+  #stadiums{min-width:420px}
+  #picks{min-width:520px}
+  #picks td{font-size:13px;padding:5px 7px}
+  #picks td.zero{color:var(--na)}
+  .mx .sort{background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;white-space:nowrap}
+  .mx .sort:hover{color:var(--ink);text-decoration:underline}
+  .mx .sort[aria-sort]{color:var(--ink);font-weight:700}
+  .mx .n{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
+  .h1{background:var(--heat-1)!important;color:var(--heat-ink-1)!important}
+  .h2{background:var(--heat-2)!important;color:var(--heat-ink-2)!important}
+  .h3{background:var(--heat-3)!important;color:var(--heat-ink-3)!important}
+  .h4{background:var(--heat-4)!important;color:var(--heat-ink-4)!important}
+  .h5{background:var(--heat-5)!important;color:var(--heat-ink-5)!important}
+  .h6{background:var(--heat-6)!important;color:var(--heat-ink-6)!important}
+  .h7{background:var(--heat-7)!important;color:var(--heat-ink-7)!important}
+  .note{color:var(--muted);font-size:12px;margin:8px 0 0;line-height:1.5}
+
+  .trophies{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:10px}
+  .trophy{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);padding:10px 12px}
+  .trophy svg{flex:none;color:var(--trophy)}
+  .trophy .t-name{font-weight:700;font-size:14px}
+  .trophy .t-meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .loading{opacity:.5;transition:opacity .15s}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="topbar">
+    <h1>MSSB <b>Savant</b> Sliders</h1>
+    <button type="button" class="theme-toggle" id="theme-toggle" role="switch" aria-checked="false">
+      <span>Dark mode</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span>
+    </button>
+  </div>
+  <p class="meta">Mario Superstar Baseball &mdash; a player&rsquo;s Stars Off record, by season, tournament or year</p>
+  <nav class="tabs" aria-label="Pages">
+    <a href="index.html">Leaderboard</a>
+    <a href="profile.html" aria-current="page">Player profile</a>
+    <a href="compare.html">Compare players</a>
+    <a href="frames.html">Frame results</a>
+  </nav>
+</header>
+
+<div id="warn"></div>
+
+<div class="controls">
+  <div class="player-field">
+    <label for="player">Player</label>
+    <input id="player" list="player-list" autocomplete="off" spellcheck="false" placeholder="Type a username">
+    <datalist id="player-list"></datalist>
+  </div>
+  <div class="view-field">
+    <label for="view">Season / Tournament / Year</label>
+    <select id="view"></select>
+  </div>
+</div>
+
+<div id="profile" hidden>
+  <div class="pname"><div class="box" id="p-name">&nbsp;</div></div>
+  <p class="meta" id="p-meta"></p>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section class="panel" aria-labelledby="stad-title">
+    <div class="panel-head">
+      <h2 id="stad-title">Stadium Record</h2>
+      <div class="switches">
+        <button type="button" class="switch" role="switch" aria-checked="true" data-split="side">
+          <span>Home / away</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span></button>
+        <button type="button" class="switch" role="switch" aria-checked="true" data-split="pick">
+          <span>1st / 2nd pick</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span></button>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="mx" id="stadiums"></table></div>
+    <p class="note">Win % with the win&ndash;loss record. 1st pick is the team with Bowser. Peach&rsquo;s Garden has no
+      reliable draft data, so it shows overall records only, and the All stadiums 1st and 2nd pick totals leave it out.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="picks-title">
+    <div class="panel-head">
+      <h2 id="picks-title">Character Picks</h2>
+      <div class="switches">
+        <button type="button" class="switch" role="switch" aria-checked="true" data-split="charpick">
+          <span>1st / 2nd pick</span><span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span></button>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="mx" id="picks"></table></div>
+    <p class="note">The share of the player&rsquo;s games with each character on their team, captains included. The
+      small number under each heading is the games it covers. Click a heading to sort by it.</p>
+  </section>
+
+  <section class="panel" id="trophy-panel" aria-labelledby="trophy-title" hidden>
+    <div class="panel-head"><h2 id="trophy-title">Tournament Trophy Case</h2></div>
+    <div id="trophies"></div>
+  </section>
+</div>
+
+<footer>
+  Player profiles cover every Stars Off game on this site: Seasons 4 to the current season, and the Netplay
+  Superstars, SLICE, Bobble and MBA Champions League tournaments. Pick all time, a year (by the date each game
+  ended, US Eastern time) or one season or tournament.
+  <b>ELO</b> is the leaderboard&rsquo;s ELO for that season or tournament, so it isn&rsquo;t shown for a year or all
+  time. <b>Wins and losses</b> count every game; the rare tied game (someone quit) counts toward games only.
+  <b>Runs/9</b> and <b>Runs Against/9</b> are the runs the player&rsquo;s team scored and allowed per 27 outs, as on
+  the leaderboard.
+  <b>1st pick</b> is the team with Bowser, who always goes first outside Peach&rsquo;s Garden. Peach&rsquo;s Garden has
+  no reliable draft data, so it shows overall records only, and the few games elsewhere where neither team had
+  Bowser count in the overall columns only.
+  <b>Tournament champions</b> aren&rsquo;t recorded by Rio. Each is the player with the highest final ELO in the
+  event, checked against the most wins, the fewest losses and who won the final, and corrected by hand where needed.
+  Seasons don&rsquo;t award trophies. The current season refreshes daily at about 4&nbsp;AM&nbsp;ET.
+  Data: Rio netplay database.
+</footer>
+</div>
+
+<script src="data/manifest.js"></script>
+<script src="data/games/index.js"></script>
+<script src="shared.js"></script>
+<script>
+"use strict";
+const {esc, fmt, METRICS} = MSSB;
+const GI = window.MSSB_GAMES_INDEX;
+const F = GI ? Object.fromEntries(GI.fields.map((f, i)=>[f, i])) : {};
+const SETS = GI ? GI.sets : [];
+const setBySlug = new Map(SETS.map((s, i)=>[s.slug, Object.assign({idx: i}, s)]));
+const playerById = new Map((GI ? GI.players : []).map(p=>[p[0], p]));
+const CHAR = GI ? new Map(GI.characters) : new Map();
+const CODE = GI ? new Map([...GI.roster_alphabet].map((c, i)=>[c, i])) : new Map();
+const R9 = METRICS.find(m=>m.k === "gen_runs_per_9"), RA9 = METRICS.find(m=>m.k === "gen_runs_against_per_9");
+const ELO = METRICS.find(m=>m.k === "gen_adjusted_elo");
+const STEPS = 7;
+
+const dayYear = d=>new Date(d * 864e5).getUTCFullYear();
+const dayLabel = d=>new Date(d * 864e5).toLocaleDateString([], {timeZone: "UTC", dateStyle: "medium"});
+const pct = (a, b)=>b ? (100 * a / b).toFixed(1) + "%" : "—";
+const plural = (n, word)=>`${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
+const ordinal = n=>{ const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+const roster = s=>[...(s || "")].map(c=>CODE.get(c));
+
+/* The view: "all", "y2025", or a season/tournament slug. */
+const state = {uid: null, view: "all", side: true, pick: true, charpick: true, sort: "all"};
+
+/* ---- the address bar keeps the profile: #u=<user id>&v=<view> ---- */
+function readHash(){
+  const u = location.hash.match(/[#&]u=(\d+)/), v = location.hash.match(/[#&]v=([^&]+)/);
+  return {uid: u ? +u[1] : null, view: v ? decodeURIComponent(v[1]) : null};
+}
+function writeHash(){
+  history.replaceState(null, "", `#u=${state.uid}&v=${encodeURIComponent(state.view)}`);
+}
+
+/* ---- data ---- */
+const loadingGames = {};
+function loadGames(slug){
+  const s = setBySlug.get(slug), file = "data/games/" + s.file;
+  if(!loadingGames[slug]) loadingGames[slug] = new Promise((resolve, reject)=>{
+    const tag = document.createElement("script");
+    tag.src = file + (location.protocol === "file:" ? "" : "?v=" + encodeURIComponent(s.built_at));
+    tag.onload = ()=>{
+      const d = (window.MSSB_GAMES || {})[slug];
+      d ? resolve(d) : reject(new Error(`${file} loaded but held no games. Re-run build_seasons.py.`));
+    };
+    tag.onerror = ()=>{ delete loadingGames[slug]; reject(new Error(`Could not load ${file}.`)); };
+    document.head.appendChild(tag);
+  });
+  return loadingGames[slug];
+}
+
+/* The player's seasons and tournaments that the view covers. */
+function setsInView(player, view){
+  const played = SETS.filter((s, i)=>player[2][i]);
+  if(view === "all") return played;
+  if(view[0] === "y"){
+    const y = +view.slice(1);
+    return played.filter(s=>dayYear(s.first_day) <= y && dayYear(s.last_day) >= y);
+  }
+  return played.filter(s=>s.slug === view);
+}
+
+/* Add up one player's games: record, runs, stadium records and character picks. */
+function summarize(uid, loaded, year){
+  const rec = ()=>({w: 0, l: 0, t: 0});
+  const stad = GI.stadiums.map(()=>({all: {all: rec(), 1: rec(), 2: rec()},
+                                     home: {all: rec(), 1: rec(), 2: rec()},
+                                     away: {all: rec(), 1: rec(), 2: rec()}}));
+  const bucket = ()=>({games: 0, chars: new Map()});
+  const picks = {all: bucket(), stad: GI.stadiums.map(()=>({all: bucket(), 1: bucket(), 2: bucket()}))};
+  const S = {games: 0, w: 0, l: 0, t: 0, rs: 0, ob: 0, ra: 0, of: 0, stad, picks,
+             seasons: new Set(), tournaments: new Set(), first: null, last: null};
+  const addPick = (b, chars)=>{ b.games++; chars.forEach(c=>b.chars.set(c, (b.chars.get(c) || 0) + 1)); };
+  for(const [slug, d] of loaded){
+    const kind = setBySlug.get(slug).kind;
+    for(const g of d.games){
+      const home = g[F.home] === uid;
+      if(!home && g[F.away] !== uid) continue;
+      if(year != null && dayYear(g[F.day]) !== year) continue;
+      const me = home ? "home" : "away", them = home ? "away" : "home";
+      const mine = roster(g[F[me + "_roster"]]), theirs = roster(g[F[them + "_roster"]]);
+      const st = g[F.stadium];
+      const pick = st === GI.peachs_garden ? null
+        : mine.includes(GI.bowser) ? 1 : theirs.includes(GI.bowser) ? 2 : null;
+      const diff = g[F[me + "_score"]] - g[F[them + "_score"]];
+      const res = diff > 0 ? "w" : diff < 0 ? "l" : "t";
+      S.games++; S[res]++;
+      S.rs += g[F[them + "_runs_allowed"]]; S.ob += g[F[them + "_outs"]];
+      S.ra += g[F[me + "_runs_allowed"]]; S.of += g[F[me + "_outs"]];
+      for(const side of ["all", me]) for(const pk of ["all", pick]) if(pk != null) stad[st][side][pk][res]++;
+      const chars = new Set(mine);
+      addPick(picks.all, chars);
+      addPick(picks.stad[st].all, chars);
+      if(pick) addPick(picks.stad[st][pick], chars);
+      (kind === "tournament" ? S.tournaments : S.seasons).add(slug);
+      S.first = S.first == null ? g[F.day] : Math.min(S.first, g[F.day]);
+      S.last = S.last == null ? g[F.day] : Math.max(S.last, g[F.day]);
+    }
+  }
+  return S;
+}
+
+/* ---- page ---- */
+let seq = 0;
+
+function init(){
+  if(!GI){
+    document.getElementById("warn").innerHTML = `<div class="warn">No player data found. Run
+      <code>python build_seasons.py</code> to generate <code>site/data/games/</code>.</div>`;
+    return;
+  }
+  document.getElementById("player-list").innerHTML =
+    GI.players.map(p=>`<option value="${esc(p[1])}"></option>`).join("");
+  const input = document.getElementById("player");
+  const choose = ()=>{
+    const text = input.value.trim().toLowerCase();
+    if(!text) return;
+    const exact = GI.players.find(p=>p[1].toLowerCase() === text);
+    const starts = GI.players.filter(p=>p[1].toLowerCase().startsWith(text));
+    const p = exact || (starts.length === 1 ? starts[0] : null);
+    if(p){ input.value = p[1]; selectPlayer(p[0]); }
+    else document.getElementById("warn").innerHTML =
+      `<div class="warn">${starts.length ? `${starts.length} players start with &ldquo;${esc(input.value)}&rdquo;; pick one from the list.`
+                                         : `No Stars Off player named &ldquo;${esc(input.value)}&rdquo;.`}</div>`;
+  };
+  input.addEventListener("change", choose);
+  input.addEventListener("keydown", e=>{ if(e.key === "Enter") choose(); });
+  document.getElementById("view").onchange = e=>{ state.view = e.target.value; render(); };
+  document.querySelectorAll(".switch[data-split]").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.split;
+      state[key] = !state[key];
+      btn.setAttribute("aria-checked", String(state[key]));
+      drawTables();
+    };
+  });
+
+  const want = readHash();
+  if(want.uid != null && playerById.has(want.uid)){
+    if(want.view) state.view = want.view;
+    selectPlayer(want.uid);
+    return;
+  }
+  /* No player in the address: the leaderboard's top player in the newest
+     season -- unless the visitor picks someone before that file arrives. */
+  MSSB.loadSeason(MSSB.latestSeason().slug).then(season=>{
+    if(state.uid != null) return;
+    const top = season.board(ELO)[0] || season.board(METRICS.find(m=>m.k === "gen_games_played"))[0];
+    selectPlayer(top && playerById.has(top.id) ? top.id : GI.players[0][0]);
+  }, ()=>{ if(state.uid == null) selectPlayer(GI.players[0][0]); });
+}
+
+function selectPlayer(uid){
+  const player = playerById.get(uid);
+  state.uid = uid;
+  document.getElementById("player").value = player[1];
+  document.getElementById("warn").innerHTML = "";
+
+  /* The view menu lists only what this player played. */
+  const total = Object.values(player[2]).reduce((a, b)=>a + b, 0);
+  const option = (value, label, n)=>`<option value="${esc(value)}">${esc(label)} (${plural(n, "game")})</option>`;
+  const years = Object.entries(player[3]).sort((a, b)=>b[0] - a[0]);
+  const played = SETS.map((s, i)=>[s, player[2][i]]).filter(([, n])=>n).reverse();   /* newest first */
+  const seasons = played.filter(([s])=>s.kind === "season");
+  const groups = MSSB.TOURNAMENT_SERIES.map(([key, , heading])=>
+    [heading, played.filter(([s])=>s.kind === "tournament" && s.series === key)]).filter(([, list])=>list.length);
+  const select = document.getElementById("view");
+  select.innerHTML = option("all", "All time", total) +
+    `<optgroup label="Years">${years.map(([y, n])=>option("y" + y, y, n)).join("")}</optgroup>` +
+    (seasons.length ? `<optgroup label="Stars Off seasons">${seasons.map(([s, n])=>option(s.slug, s.name, n)).join("")}</optgroup>` : "") +
+    groups.map(([heading, list])=>`<optgroup label="${esc(heading)}">${list.map(([s, n])=>option(s.slug, s.name, n)).join("")}</optgroup>`).join("");
+  const valid = [...select.options].some(o=>o.value === state.view);
+  state.view = valid ? state.view : "all";
+  select.value = state.view;
+  render();
+}
+
+let current = null;   /* {player, S, view, sets} on screen */
+function render(){
+  const mine = ++seq, player = playerById.get(state.uid), view = state.view;
+  const sets = setsInView(player, view);
+  const profile = document.getElementById("profile");
+  const slow = setTimeout(()=>profile.classList.add("loading"), 150);
+  writeHash();
+  const single = view !== "all" && view[0] !== "y" ? setBySlug.get(view) : null;
+  Promise.all([Promise.all(sets.map(s=>loadGames(s.slug).then(d=>[s.slug, d]))),
+               single ? MSSB.loadSeason(single.slug).catch(()=>null) : null]).then(([loaded, season])=>{
+    clearTimeout(slow);
+    if(mine !== seq) return;
+    profile.classList.remove("loading");
+    profile.hidden = false;
+    const year = view[0] === "y" ? +view.slice(1) : null;
+    const S = summarize(state.uid, loaded, year);
+    current = {player, S, view, sets, single, year};
+    drawHeader(season);
+    drawTables();
+    drawTrophies();
+  }, err=>{
+    clearTimeout(slow);
+    if(mine !== seq) return;
+    profile.classList.remove("loading");
+    document.getElementById("warn").innerHTML = `<div class="warn">${esc(err.message)}</div>`;
+  });
+}
+
+function drawHeader(season){
+  const {player, S, single, year} = current;
+  document.getElementById("p-name").textContent = player[1];
+  const scope = single ? single.name + (single.final ? "" : " (in progress)")
+    : year != null ? String(year) : "All time";
+  const parts = [S.seasons.size && plural(S.seasons.size, "season"),
+                 S.tournaments.size && plural(S.tournaments.size, "tournament")].filter(Boolean);
+  const setsLine = single || !parts.length ? "" : " in " + parts.join(" and ");
+  document.getElementById("p-meta").innerHTML = `<b>${esc(scope)}</b> &middot; ${plural(S.games, "game")}${esc(setsLine)}` +
+    (S.first != null ? ` &middot; ${esc(dayLabel(S.first))} to ${esc(dayLabel(S.last))}` : "");
+
+  const tile = (label, value, sub)=>`<div class="tile"><div class="l">${label}</div><div class="v">${value}</div>` +
+    `<div class="s">${sub}</div></div>`;
+  let elo = "";
+  if(single){
+    const p = season && season.byId.get(state.uid), c = p && season.cell(p, ELO);
+    const sub = !c ? "not available" : c.ok
+      ? `${ordinal(Math.round(c.pct))} percentile of ${c.pool}`
+      : esc(MSSB.whyNot(ELO, c, season.games(p), season.entry));
+    elo = tile("ELO", c ? fmt(ELO, c.value) : "—", sub);
+  }
+  const decided = S.w + S.l;
+  const r9 = MSSB.counts(R9, {num: S.rs, den: S.ob}), ra9 = MSSB.counts(RA9, {num: S.ra, den: S.of});
+  document.getElementById("tiles").innerHTML = elo +
+    tile("Wins", S.w.toLocaleString(), decided ? `${pct(S.w, decided)} win rate` : "no decided games") +
+    tile("Losses", S.l.toLocaleString(), S.t ? `plus ${plural(S.t, "tied game")}` : plural(S.games, "game")) +
+    tile("Runs/9", S.ob ? fmt(R9, 27 * S.rs / S.ob) : "—", r9 ? `<span title="${esc(r9.title)}">${esc(r9.text)}</span>` : "") +
+    tile("Runs Against/9", S.of ? fmt(RA9, 27 * S.ra / S.of) : "—", ra9 ? `<span title="${esc(ra9.title)}">${esc(ra9.text)}</span>` : "");
+}
+
+function drawTables(){
+  if(!current) return;
+  drawStadiums();
+  drawPicks();
+}
+
+/* ---- stadium record ---- */
+function drawStadiums(){
+  const {S} = current, peach = GI.peachs_garden;
+  const groups = state.side ? [["all", "All games"], ["home", "Home"], ["away", "Away"]] : [["all", null]];
+  const subs = state.pick ? [["all", "Overall"], [1, "1st pick"], [2, "2nd pick"]] : [["all", "Overall"]];
+  const cell = (r, na)=>{
+    if(na) return `<td class="na" title="No reliable draft data at Peach&rsquo;s Garden">n/a</td>`;
+    const n = r.w + r.l;
+    if(!n && !r.t) return `<td class="na">—</td>`;
+    return `<td title="${r.w} won, ${r.l} lost${r.t ? `, ${r.t} tied` : ""}"><span class="p">${pct(r.w, n)}</span>` +
+           `<span class="r">${r.w}&ndash;${r.l}${r.t ? `&ndash;${r.t}` : ""}</span></td>`;
+  };
+  const sum = (side, pk)=>S.stad.reduce((t, st)=>{ const r = st[side][pk]; return {w: t.w + r.w, l: t.l + r.l, t: t.t + r.t}; },
+                                        {w: 0, l: 0, t: 0});
+  let head;
+  if(state.side && state.pick){
+    head = `<tr><th rowspan="2"></th>${groups.map(([, g])=>`<th class="group" colspan="${subs.length}">${g}</th>`).join("")}</tr>` +
+           `<tr>${groups.map(()=>subs.map(([, s])=>`<th>${s}</th>`).join("")).join("")}</tr>`;
+  } else {
+    const labels = state.side ? groups.map(([, g])=>g) : subs.map(([, s])=>s);
+    head = `<tr><th></th>${labels.map(l=>`<th>${l}</th>`).join("")}</tr>`;
+  }
+  const row = (label, get, isPeach, cls = "")=>`<tr${cls ? ` class="${cls}"` : ""}><th scope="row">${label}</th>` +
+    groups.map(([side])=>subs.map(([pk])=>cell(get(side, pk), isPeach && pk !== "all")).join("")).join("") + `</tr>`;
+  document.getElementById("stadiums").innerHTML = `<thead>${head}</thead><tbody>` +
+    GI.stadiums.map((name, i)=>row(esc(name), (side, pk)=>S.stad[i][side][pk], i === peach)).join("") +
+    row("All stadiums", sum, false, "total") + `</tbody>`;
+}
+
+/* ---- character picks ---- */
+function drawPicks(){
+  const {S} = current, peach = GI.peachs_garden;
+  /* Columns: all games, then each stadium, split by pick where the draft is known. */
+  const cols = [{key: "all", group: null, label: "All games", b: S.picks.all}];
+  GI.stadiums.forEach((name, i)=>{
+    if(state.charpick && i !== peach){
+      cols.push({key: `s${i}p1`, group: name, label: "1st", b: S.picks.stad[i][1]},
+                {key: `s${i}p2`, group: name, label: "2nd", b: S.picks.stad[i][2]});
+    } else {
+      cols.push({key: `s${i}`, group: name, label: state.charpick ? "All" : name, b: S.picks.stad[i].all});
+    }
+  });
+  if(!cols.some(c=>c.key === state.sort)) state.sort = "all";
+  const sortCol = cols.find(c=>c.key === state.sort);
+  const rate = (b, id)=>b.games ? (b.chars.get(id) || 0) / b.games : null;
+  const chars = [...S.picks.all.chars.keys()].sort((a, b)=>
+    (rate(sortCol.b, b) ?? -1) - (rate(sortCol.b, a) ?? -1) ||
+    rate(S.picks.all, b) - rate(S.picks.all, a) || String(CHAR.get(a)).localeCompare(String(CHAR.get(b))));
+
+  const sortBtn = c=>`<button type="button" class="sort" data-sort="${c.key}"${c.key === state.sort ? ` aria-sort="descending"` : ""}>` +
+    `${esc(c.label)}${c.key === state.sort ? " &#9662;" : ""}<span class="n">${c.b.games.toLocaleString()} g</span></button>`;
+  let head;
+  if(state.charpick){
+    const spans = [];
+    cols.slice(1).forEach(c=>{ const last = spans[spans.length - 1];
+      if(last && last.group === c.group) last.n++; else spans.push({group: c.group, n: 1}); });
+    head = `<tr><th rowspan="2"></th><th rowspan="2">${sortBtn(cols[0])}</th>` +
+      spans.map(s=>`<th class="group" colspan="${s.n}">${esc(s.group)}</th>`).join("") + `</tr>` +
+      `<tr>${cols.slice(1).map(c=>`<th>${sortBtn(c)}</th>`).join("")}</tr>`;
+  } else {
+    head = `<tr><th></th>${cols.map(c=>`<th>${sortBtn(c)}</th>`).join("")}</tr>`;
+  }
+  const td = (c, id)=>{
+    if(!c.b.games) return `<td class="na">—</td>`;
+    const n = c.b.chars.get(id) || 0, r = n / c.b.games;
+    const step = r ? Math.max(1, Math.ceil(r * STEPS)) : 0;
+    const where = c.key === "all" ? "all games" : c.group + (c.label === "1st" ? ", 1st pick" : c.label === "2nd" ? ", 2nd pick" : "");
+    return `<td class="${step ? "h" + step : "zero"}" title="${esc(`${CHAR.get(id)}: ${n} of ${c.b.games} games (${where})`)}">` +
+           `${Math.round(r * 100)}%</td>`;
+  };
+  const table = document.getElementById("picks");
+  table.innerHTML = `<thead>${head}</thead><tbody>` +
+    chars.map(id=>`<tr><th scope="row">${esc(CHAR.get(id) ?? `Character ${id}`)}</th>${cols.map(c=>td(c, id)).join("")}</tr>`).join("") +
+    `</tbody>`;
+  table.querySelectorAll(".sort").forEach(btn=>{
+    btn.onclick = ()=>{ state.sort = btn.dataset.sort; drawPicks(); table.querySelector(`[data-sort="${state.sort}"]`).focus(); };
+  });
+}
+
+/* ---- trophy case: a tournament, a year or all time; seasons have no trophies ---- */
+const TROPHY = `<svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor"
+  d="M7 2h10v2h4v3.5A4.5 4.5 0 0 1 16.9 12 5 5 0 0 1 13 14.9V18h3.5v2h-9v-2H11v-3.1A5 5 0 0 1 7.1 12 4.5 4.5 0 0 1 3 7.5V4h4V2zm0 4H5v1.5a2.5 2.5 0 0 0 2 2.45V6zm10 0v3.95a2.5 2.5 0 0 0 2-2.45V6h-2zM6 21h12v1H6z"/></svg>`;
+function drawTrophies(){
+  const {player, S, single, year} = current;
+  const panel = document.getElementById("trophy-panel"), box = document.getElementById("trophies");
+  panel.hidden = !!(single && single.kind !== "tournament");
+  if(panel.hidden) return;
+  const card = t=>{
+    const s = setBySlug.get(t.slug);
+    return `<div class="trophy">${TROPHY}<div><div class="t-name">${esc(s.name)}</div>` +
+      `<div class="t-meta">Champion &middot; ${esc(dayLabel(s.last_day))} &middot; ${t.record[0]}&ndash;${t.record[1]}</div></div></div>`;
+  };
+  if(single){
+    const t = GI.trophies.find(t=>t.slug === single.slug);
+    if(!t){
+      box.innerHTML = `<p class="sub">${single.final ? "No champion recorded for this tournament."
+                                                     : "The champion is decided once this tournament is over."}</p>`;
+    } else if(t.user_id === state.uid){
+      box.innerHTML = `<div class="trophies">${card(t)}</div>`;
+    } else {
+      const champ = playerById.get(t.user_id);
+      box.innerHTML = `<p class="sub">No trophy in this one. Champion: <b>${esc(champ ? champ[1] : "unknown")}</b>` +
+        ` (${t.record[0]}&ndash;${t.record[1]}).</p>`;
+    }
+    return;
+  }
+  const won = GI.trophies.filter(t=>t.user_id === state.uid && (year == null || t.year === year))
+    .sort((a, b)=>setBySlug.get(b.slug).last_day - setBySlug.get(a.slug).last_day);
+  const entered = S.tournaments.size, when = year != null ? ` in ${year}` : "";
+  box.innerHTML = won.length
+    ? `<div class="trophies">${won.map(card).join("")}</div>` +
+      `<p class="note">${plural(won.length, "tournament")} won${when}, from ${plural(entered, "tournament")} played.</p>`
+    : `<p class="sub">No tournament wins${when}${entered ? ` (${plural(entered, "tournament")} played)` : ""}.</p>`;
+}
+
+init();
+</script>
+</body>
+</html>

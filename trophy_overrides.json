@@ -1,0 +1,4 @@
+{
+ "_comment": "Tournament champions set by hand, replacing the automatic pick (player_games.pick_champion). Key: the tournament's slug, as in the site's URLs (for example netplaysuperstars28); value: the winner's Rio username. Push a change and the next build applies it.",
+ "_example_netplaysuperstars28": "remkey"
+}
