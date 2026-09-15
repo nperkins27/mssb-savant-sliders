@@ -15,7 +15,7 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 | `site/data/games/` | Every game, one file per season or tournament, plus `index.js` (players, years, tournament champions) |
 | `player_games.py` | Builds `site/data/games/`; called by `build_seasons.py` |
 | `trophy_overrides.json` | Tournament champions set by hand, replacing the automatic pick |
-| `site/frames.html` | Frame results page: what happens when a character hits the ball on each frame, with ten filters |
+| `site/frames.html` | Frame results page: what happens when a character hits the ball on each frame, with eleven filters |
 | `site/data/frames/` | The frame results counts: `index.js`, plus one file per character in `final/` (finished seasons and tournaments) and `live/` (in progress) |
 | `frame_results.py` | Builds `site/data/frames/`; called by `build_seasons.py` |
 | `site/shared.js` | Used by both pages: the metric list, the **metric definitions text** (`DEFINITIONS`), season loading and the definitions dialog |
@@ -147,9 +147,9 @@ finished ones are never queried again.
 The Frame results page pools every slap, charge and star swing contact from
 every season and tournament above, and shows, for each frame of the swing, how
 those contacts turned out: Foul, Home Run, On Base or Out (Home Run folds into
-On Base when Separate HRs is off). Ten filters narrow it down: character,
+On Base when Separate HRs is off). Eleven filters narrow it down: character,
 batting hand, type of contact, type of swing, frame, stick input, result,
-stadium, Separate HRs and chemistry links on base.
+stadium, Separate HRs, Show OPS and chemistry links on base.
 
 Results are classified by what the at-bat did (`event.result_of_ab`), because
 `contact_summary.secondary_result` alone calls some fouls outs and some force
@@ -164,6 +164,13 @@ outs fouls:
 
 Bunts (no swing) aren't counted, and neither are aborted uploads with 0 innings
 played, whose rosters read as all Mario.
+
+**Show OPS** (off by default) adds an OPS column. Each contact scores 1 if the
+batter reached base, plus the bases it was worth (single 1, double 2, triple 3,
+home run 4; reaching on an error counts as on base and 1 base), and a frame's
+OPS is the average over all of its contacts, so fouls, outs and fielder's
+choices score 0. The column isn't shaded, because OPS isn't a share of the
+frame. The page works it out from the same counts, so the build is unchanged.
 
 The build stores counts, not contacts: contacts are counted per combination of
 the nine filterable dimensions, and the page adds up the combinations that match
