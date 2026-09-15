@@ -124,7 +124,8 @@ always balance. Its tiles are games, players, Runs/9 across every game, the home
 team's win % and the 1st pick's win %. Its **Top players only** switch keeps
 games between top players: every MBA Champions League game, the last 6 games of
 every other tournament, and season games where both players have a lifetime win
-rate of at least 65% across every season and tournament here. The rule's
+rate of at least 65% over at least 50 decided games, across every season and
+tournament here. The rule's
 settings are the `TOP_*` constants in `player_games.py`, and the qualifying
 players are listed on the page.
 

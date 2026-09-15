@@ -1,6 +1,6 @@
 {
  "format": 1,
- "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8",
+ "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9",
  "sets": [
   {
    "slug": "starsoffseason4",
@@ -12,8 +12,8 @@
    "first_day": 19442,
    "last_day": 19454,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "starsoffseason5",
@@ -25,8 +25,8 @@
    "first_day": 19455,
    "last_day": 19539,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "slice2023starsoff",
@@ -39,8 +39,8 @@
    "first_day": 19511,
    "last_day": 19512,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "starsoffseason6",
@@ -52,8 +52,8 @@
    "first_day": 19538,
    "last_day": 19631,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "starsoffseason7",
@@ -65,8 +65,8 @@
    "first_day": 19631,
    "last_day": 19754,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars16",
@@ -79,8 +79,8 @@
    "first_day": 19756,
    "last_day": 19763,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "starsoffseason8",
@@ -92,8 +92,8 @@
    "first_day": 19768,
    "last_day": 19859,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "npss17",
@@ -106,8 +106,8 @@
    "first_day": 19824,
    "last_day": 19834,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "s9superstarsoff",
@@ -119,8 +119,8 @@
    "first_day": 19859,
    "last_day": 19986,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "slice2024superstarsoff",
@@ -133,8 +133,8 @@
    "first_day": 19875,
    "last_day": 19876,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "npss18",
@@ -147,8 +147,8 @@
    "first_day": 19888,
    "last_day": 19896,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "mbachampionsleague2024",
@@ -161,8 +161,8 @@
    "first_day": 19938,
    "last_day": 20075,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars19",
@@ -175,8 +175,8 @@
    "first_day": 19937,
    "last_day": 19946,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "s10superstarsoff",
@@ -188,8 +188,8 @@
    "first_day": 19986,
    "last_day": 20107,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars20",
@@ -202,8 +202,8 @@
    "first_day": 20007,
    "last_day": 20016,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "s11superstarsoff",
@@ -215,8 +215,8 @@
    "first_day": 20108,
    "last_day": 20241,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars21",
@@ -229,8 +229,8 @@
    "first_day": 20111,
    "last_day": 20121,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars22",
@@ -243,8 +243,8 @@
    "first_day": 20167,
    "last_day": 20177,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "bobblestarsoffbracket",
@@ -257,8 +257,8 @@
    "first_day": 20183,
    "last_day": 20183,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars23",
@@ -271,8 +271,8 @@
    "first_day": 20223,
    "last_day": 20233,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "s12superstarsoff",
@@ -284,8 +284,8 @@
    "first_day": 20241,
    "last_day": 20438,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "slice2025superstarsoff",
@@ -298,8 +298,8 @@
    "first_day": 20260,
    "last_day": 20261,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars24",
@@ -312,8 +312,8 @@
    "first_day": 20293,
    "last_day": 20303,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars25",
@@ -326,8 +326,8 @@
    "first_day": 20356,
    "last_day": 20366,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "mbachampionsleague2025",
@@ -340,8 +340,8 @@
    "first_day": 20387,
    "last_day": 20436,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "interimsuperstarsoff",
@@ -353,8 +353,8 @@
    "first_day": 20438,
    "last_day": 20468,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "s13superstarsoff",
@@ -366,8 +366,8 @@
    "first_day": 20469,
    "last_day": 20559,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars26",
@@ -380,8 +380,8 @@
    "first_day": 20474,
    "last_day": 20485,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "bobble2026",
@@ -394,8 +394,8 @@
    "first_day": 20533,
    "last_day": 20533,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "s14superstarsoff",
@@ -407,8 +407,8 @@
    "first_day": 20559,
    "last_day": 20681,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars27",
@@ -421,8 +421,8 @@
    "first_day": 20585,
    "last_day": 20597,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "slice2026superstarsoff",
@@ -435,8 +435,8 @@
    "first_day": 20645,
    "last_day": 20646,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "s15superstarsoff",
@@ -448,8 +448,8 @@
    "first_day": 20681,
    "last_day": 20711,
    "final": false,
-   "built_at": "2026-09-15T21:07:27+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
    "slug": "netplaysuperstars28",
@@ -462,8 +462,8 @@
    "first_day": 20685,
    "last_day": 20695,
    "final": true,
-   "built_at": "2026-09-15T21:04:58+00:00",
-   "definitions_sha256": "55b4add8bf283f39d3ee81ea91771200cc532f90eae7b3a9052d51ec9329e3f8"
+   "built_at": "2026-09-15T21:10:08+00:00",
+   "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   }
  ]
 }

@@ -53,7 +53,7 @@ OVERRIDES_FILE = HERE / "trophy_overrides.json"
 TOP_ALL_GAMES_SERIES = ("mba",)
 TOP_FINAL_GAMES = 6
 TOP_WIN_PCT = 65
-TOP_MIN_DECIDED = 0
+TOP_MIN_DECIDED = 50
 
 GAMES_SQL = """
 SELECT g.game_id, g.date_time_end, g.stadium_id, g.away_player_id, g.home_player_id,
