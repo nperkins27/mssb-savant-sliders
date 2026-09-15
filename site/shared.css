@@ -36,6 +36,14 @@
   --shadow:rgba(0,0,0,.25);
   --backdrop:rgba(0,0,0,.45);
   --drop-zone:rgba(123,167,204,.14);
+  /* Frame results heatmap: one blue ramp, light (small share) to dark (large),
+     each step with the ink that clears 4.5:1 on it. Dark mode runs the same
+     steps the other way, so small shares recede into the dark page. */
+  --heat-1:#cde2fb; --heat-2:#9ec5f4; --heat-3:#6da7ec; --heat-4:#3987e5;
+  --heat-5:#256abf; --heat-6:#184f95; --heat-7:#0d366b;
+  --heat-ink-1:#1c1c1c; --heat-ink-2:#1c1c1c; --heat-ink-3:#1c1c1c; --heat-ink-4:#1c1c1c;
+  --heat-ink-5:#fff; --heat-ink-6:#fff; --heat-ink-7:#fff;
+  --heat-total:#d6d6d6;
   --serif:Georgia,"Times New Roman",serif;
   --sans:Arial,Helvetica,-apple-system,"Segoe UI",sans-serif;
 }
@@ -50,6 +58,11 @@
     --warn-bg:#3b2326; --warn-line:#7c3f43; --warn-ink:#f4c7c9;
     --code-bg:#2d3136; --code-line:#42474e;
     --shadow:rgba(0,0,0,.6); --backdrop:rgba(0,0,0,.65); --drop-zone:rgba(107,159,205,.16);
+    --heat-1:#0d366b; --heat-2:#184f95; --heat-3:#256abf; --heat-4:#3987e5;
+    --heat-5:#6da7ec; --heat-6:#9ec5f4; --heat-7:#cde2fb;
+    --heat-ink-1:#fff; --heat-ink-2:#fff; --heat-ink-3:#fff; --heat-ink-4:#1b1d20;
+    --heat-ink-5:#1b1d20; --heat-ink-6:#1b1d20; --heat-ink-7:#1b1d20;
+    --heat-total:#33373d;
   }
 }
 :root[data-theme="dark"]{
@@ -62,6 +75,11 @@
   --warn-bg:#3b2326; --warn-line:#7c3f43; --warn-ink:#f4c7c9;
   --code-bg:#2d3136; --code-line:#42474e;
   --shadow:rgba(0,0,0,.6); --backdrop:rgba(0,0,0,.65); --drop-zone:rgba(107,159,205,.16);
+  --heat-1:#0d366b; --heat-2:#184f95; --heat-3:#256abf; --heat-4:#3987e5;
+  --heat-5:#6da7ec; --heat-6:#9ec5f4; --heat-7:#cde2fb;
+  --heat-ink-1:#fff; --heat-ink-2:#fff; --heat-ink-3:#fff; --heat-ink-4:#1b1d20;
+  --heat-ink-5:#1b1d20; --heat-ink-6:#1b1d20; --heat-ink-7:#1b1d20;
+  --heat-total:#33373d;
 }
 
 *{box-sizing:border-box}
@@ -100,6 +118,7 @@ header h1 b{font-weight:700}
 .tabs a[aria-current="page"]{background:var(--chrome);border-color:var(--line);font-weight:700}
 .tabs a:not([aria-current]):hover{text-decoration:underline}
 .tabs a:focus-visible{outline:2px solid var(--boxline);outline-offset:1px}
+@media (max-width:560px){ .tabs a{padding:7px 9px;font-size:13px;white-space:nowrap} }
 
 /* ---- controls ---- */
 .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;

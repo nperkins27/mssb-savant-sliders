@@ -9,6 +9,9 @@ static site on GitHub Pages and refreshed automatically from the Rio database.
 |---|---|
 | `site/index.html` | Leaderboard page: one season, ranked by a chosen metric, with one player's sliders |
 | `site/compare.html` | Compare page: 2 to 12 season + player cards, reorderable by drag. The comparison is kept in the URL (`#c=<season>[+<season>...]~<user id>,...`) |
+| `site/frames.html` | Frame results page: what happens when a character hits the ball on each frame, with ten filters |
+| `site/data/frames/` | The frame results counts: `index.js`, plus one file per character in `final/` (finished seasons and tournaments) and `live/` (in progress) |
+| `frame_results.py` | Builds `site/data/frames/`; called by `build_seasons.py` |
 | `site/shared.js` | Used by both pages: the metric list, the **metric definitions text** (`DEFINITIONS`), season loading and the definitions dialog |
 | `site/shared.css` | Styles used by both pages |
 | `site/data/manifest.js` / `.json` | List of seasons: dates, final or in progress, when each was built |
@@ -84,6 +87,37 @@ a single season or tournament. In seasons the other minimums still apply; with a
 tournament selected there are none. Set to a selection's usual minimum, it
 reproduces the built files exactly. Combining a single season reproduces its built file exactly, and
 combinations match `build_rows()` run on the same summed counts in Python.
+
+## Frame results
+
+The Frame results page pools every slap, charge and star swing contact from
+every season and tournament above, and shows, for each frame of the swing, how
+those contacts turned out: Foul, Home Run, On Base or Out (Home Run folds into
+On Base when Separate HRs is off). Ten filters narrow it down: character,
+batting hand, type of contact, type of swing, frame, stick input, result,
+stadium, Separate HRs and chemistry links on base.
+
+Results are classified by what the at-bat did (`event.result_of_ab`), because
+`contact_summary.secondary_result` alone calls some fouls outs and some force
+outs fouls:
+
+- **Foul**: the at-bat carried on after the contact.
+- **On Base**: single, double, triple, or reached on an error.
+- **Home Run**.
+- **Out**: everything else, including fielder's choices (secondary result 4:
+  the batter reaches but a runner is out), foul catches, sac flies, double
+  plays and forced outs.
+
+Bunts (no swing) aren't counted, and neither are aborted uploads with 0 innings
+played, whose rosters read as all Mario.
+
+The build stores counts, not contacts: contacts are counted per combination of
+the nine filterable dimensions, and the page adds up the combinations that match
+the filters. Finished
+seasons and tournaments are pooled once into `data/frames/final/` and never
+queried again; a tag set is added to that pool on the first run after it
+finishes. Those still in progress are rebuilt into `data/frames/live/` on
+every run. Editing `frame_results.py` rebuilds the finished pool once.
 
 ## How the refresh works
 

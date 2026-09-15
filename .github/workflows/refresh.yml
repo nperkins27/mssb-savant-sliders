@@ -22,6 +22,7 @@ on:
       - "site/*.css"
       - "season_metrics.py"
       - "season_metrics_sql.py"
+      - "frame_results.py"
       - "build_seasons.py"
       - ".github/workflows/refresh.yml"
 

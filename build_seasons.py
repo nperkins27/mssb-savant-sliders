@@ -22,6 +22,9 @@ Run it any time -- it only does the work that is still due.
   * Every season records a fingerprint of the definitions that built it.
     Editing either vendored file makes every season stale, so a metric change
     rebuilds the history once, automatically.
+  * The Frame Results tab's counts (frame_results.py) are refreshed on every
+    run over the same seasons and tournaments, on the same model: finished
+    ones are queried once, those in progress every run.
 
 Credentials come from the RIO_DB_HOST / _PORT / _NAME / _USER / _PASSWORD
 environment variables (GitHub Actions secrets) or, failing that, from
@@ -47,6 +50,7 @@ import time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import frame_results
 import season_metrics as sm
 import season_metrics_sql as q
 
@@ -498,7 +502,9 @@ def main() -> None:
         print()
 
         if args.dry_run:
-            print("dry run -- nothing written")
+            frame_results.refresh(conn, discovered, now, GRACE_DAYS * 86400, out_dir / "frames",
+                                  dry_run=True)
+            print("\ndry run -- nothing written")
             return
 
         def entries(current: dict) -> list[dict]:
@@ -545,6 +551,9 @@ def main() -> None:
             save_manifest(out_dir, manifest)
             print(f"        {len(payload['players'])} players, {qualified} qualified, "
                   f"in {built - t0:.0f}s" + ("  -> final" if final else ""), flush=True)
+
+        print()
+        frame_results.refresh(conn, discovered, now, GRACE_DAYS * 86400, out_dir / "frames")
 
         # The alert is about seasons: a tournament running doesn't mean one is.
         alert = season_gap_alert(conn, [s for s in discovered if s["kind"] == "season"], now,
