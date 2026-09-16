@@ -142,13 +142,13 @@ window.MSSB_FRAMES = {
    8,
    "Baby Luigi",
    1686,
-   6
+   10
   ],
   [
    7,
    "Baby Mario",
    2410,
-   25
+   27
   ],
   [
    17,
@@ -160,13 +160,13 @@ window.MSSB_FRAMES = {
    14,
    "Boo",
    122256,
-   2160
+   2166
   ],
   [
    9,
    "Bowser",
    78364,
-   1098
+   1102
   ],
   [
    19,
@@ -208,13 +208,13 @@ window.MSSB_FRAMES = {
    39,
    "Dixie",
    37021,
-   402
+   405
   ],
   [
    2,
    "DK",
    105838,
-   1955
+   1961
   ],
   [
    51,
@@ -244,7 +244,7 @@ window.MSSB_FRAMES = {
    40,
    "Goomba",
    2393,
-   15
+   20
   ],
   [
    37,
@@ -256,7 +256,7 @@ window.MSSB_FRAMES = {
    12,
    "Koopa(G)",
    1629,
-   2
+   7
   ],
   [
    42,
@@ -268,7 +268,7 @@ window.MSSB_FRAMES = {
    1,
    "Luigi",
    91547,
-   1556
+   1559
   ],
   [
    33,
@@ -310,7 +310,7 @@ window.MSSB_FRAMES = {
    24,
    "Noki(B)",
    3032,
-   23
+   26
   ],
   [
    26,
@@ -328,7 +328,7 @@ window.MSSB_FRAMES = {
    41,
    "Paragoomba",
    1738,
-   29
+   31
   ],
   [
    43,
@@ -340,25 +340,25 @@ window.MSSB_FRAMES = {
    20,
    "Paratroopa(R)",
    4243,
-   23
+   28
   ],
   [
    4,
    "Peach",
    30463,
-   788
+   792
   ],
   [
    38,
    "Petey",
    93869,
-   1565
+   1568
   ],
   [
    21,
    "Pianta(B)",
    2836,
-   47
+   49
   ],
   [
    22,
@@ -394,7 +394,7 @@ window.MSSB_FRAMES = {
    16,
    "Shy Guy(R)",
    5186,
-   41
+   46
   ],
   [
    45,
@@ -424,7 +424,7 @@ window.MSSB_FRAMES = {
    13,
    "Toad(R)",
    12955,
-   93
+   95
   ],
   [
    30,
@@ -460,7 +460,7 @@ window.MSSB_FRAMES = {
    6,
    "Yoshi",
    104054,
-   1610
+   1614
   ]
  ],
  "final": {
@@ -507,7 +507,7 @@ window.MSSB_FRAMES = {
   "tag_set_ids": [
    223
   ],
-  "contacts": 30672,
-  "built_at": "2026-09-15T23:25:37+00:00"
+  "contacts": 30740,
+  "built_at": "2026-09-16T00:17:06+00:00"
  }
 };
