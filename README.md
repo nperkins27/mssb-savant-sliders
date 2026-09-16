@@ -165,12 +165,14 @@ outs fouls:
 Bunts (no swing) aren't counted, and neither are aborted uploads with 0 innings
 played, whose rosters read as all Mario.
 
-**Show OPS** (off by default) adds an OPS column. Each contact scores 1 if the
-batter reached base, plus the bases it was worth (single 1, double 2, triple 3,
-home run 4; reaching on an error counts as on base and 1 base), and a frame's
-OPS is the average over all of its contacts, so fouls, outs and fielder's
-choices score 0. The column isn't shaded, because OPS isn't a share of the
-frame. The page works it out from the same counts, so the build is unchanged.
+**Show SLG** (off by default) adds a slugging column: the bases gained per time
+on base. A single is 1, a double 2, a triple 3, a home run 4 and reaching on an
+error 1, divided by the contacts that reached base (home runs included).
+Contacts that didn't reach base — fouls, outs and fielder's choices — are in
+neither half, so the number always falls between 1 and 4, and a frame where
+nobody reached base shows no value. The column isn't shaded, because it isn't a
+share of the frame. The page works it out from the same counts, so the build is
+unchanged.
 
 The build stores counts, not contacts: contacts are counted per combination of
 the nine filterable dimensions, and the page adds up the combinations that match

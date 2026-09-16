@@ -28,9 +28,9 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   .heat td[data-tip]:hover{outline:2px solid var(--ink);outline-offset:-2px}
   .heat td.n,.heat th.n{background:none;color:var(--muted);font-size:12.5px;font-family:var(--sans);width:1%}
   .heat tr.total th,.heat tr.total td:not(.n){background:var(--heat-total)}
-  /* OPS is a different measure from the shares, so it stays off their colour
+  /* SLG is a different measure from the shares, so it stays off their colour
      scale: neutral, like the Total row. */
-  .heat td.ops{background:var(--heat-total)}
+  .heat td.slg{background:var(--heat-total)}
   .heat tr.total th{font-family:var(--sans);font-size:13px}
   .heat tr.total td{font-size:15.5px}
   .heat .none{color:var(--na)}
@@ -97,8 +97,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
     <select id="f-hr"><option value="on">On</option><option value="off">Off</option></select>
   </div>
   <div>
-    <label for="f-ops">Show OPS</label>
-    <select id="f-ops"><option value="on">On</option><option value="off" selected>Off</option></select>
+    <label for="f-slg">Show SLG</label>
+    <select id="f-slg"><option value="on">On</option><option value="off" selected>Off</option></select>
   </div>
   <div><label for="f-chem">Chem links on base</label><div data-dim="chem"></div></div>
 </div>
@@ -121,10 +121,10 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   error. <b>Home Run</b> has its own column while Separate HRs is on; switch it off and home runs count
   as On Base. <b>Out</b>: every other result, including fielder&rsquo;s choices, foul catches, sac flies
   and double plays. Bunts aren&rsquo;t counted.
-  <b>OPS</b> (Show OPS on) scores each contact 1 if the batter reached base, plus the bases it was worth: 1 for a
-  single, 2 for a double, 3 for a triple, 4 for a home run, and 1 for reaching on an error. A frame&rsquo;s OPS is
-  the average over all of its contacts, so fouls, outs and fielder&rsquo;s choices count as 0. It isn&rsquo;t
-  shaded, because it isn&rsquo;t a share of the frame.
+  <b>SLG</b> (Show SLG on) is the bases gained per time on base: 1 for a single, 2 for a double, 3 for a triple,
+  4 for a home run and 1 for reaching on an error, divided by the contacts that reached base. Contacts that
+  didn&rsquo;t reach base &mdash; fouls, outs and fielder&rsquo;s choices &mdash; are left out of both halves, so it
+  always falls between 1 and 4. It isn&rsquo;t shaded, because it isn&rsquo;t a share of the frame.
   Chem links on base are the chemistry links with the runners on base when the pitch was thrown.
   The current season refreshes daily at about 4&nbsp;AM&nbsp;ET; finished seasons and tournaments
   never change. Data: Rio netplay database.
@@ -286,7 +286,7 @@ function init(){
                                      selected: (def[name] || options.map(([v])=>v)).map(String)});
   });
   document.getElementById("f-hr").onchange = update;
-  document.getElementById("f-ops").onchange = update;
+  document.getElementById("f-slg").onchange = update;
 
   const ids = new Set([...F.final.tag_set_ids, ...F.live.tag_set_ids]);
   const covered = MSSB.seasons.filter(s=>ids.has(s.tag_set_id));
@@ -321,13 +321,13 @@ function update(){
   });
 }
 
-/* OPS, per contact: 1 if the batter reached base (the On Base and Home Run
-   results), plus the bases the result is worth. A frame's OPS is the average
-   over all its contacts, so fouls and outs add 0. */
+/* SLG: the bases a result is worth, over the contacts that reached base (the
+   On Base and Home Run results, errors included). Fouls and outs are not in
+   either half, so a frame's SLG is the bases per time on base, 1 to 4. */
 const RESULT_BASES = {"single": 1, "double": 2, "triple": 3, "homerun": 4, "induced error": 1};
 
 /* Sum every cell that passes the filters into frame x outcome counts, plus
-   each frame's times on base and bases for OPS. */
+   each frame's times on base and bases for SLG. */
 function tally(parts){
   const allow = F.dims.map(([name], j)=>{
     const ok = new Uint8Array(SIZES[j]);
@@ -338,24 +338,24 @@ function tally(parts){
   const reachedOf = outcomeOf.map(o=>F.outcomes[o] === "on_base" || F.outcomes[o] === "homerun" ? 1 : 0);
   const basesOf = F.dims[resultDim][1].map(label=>RESULT_BASES[label] || 0);
   const counts = F.dims[frameDim][1].map(()=>F.outcomes.map(()=>0));
-  const ops = F.dims[frameDim][1].map(()=>({reached: 0, bases: 0}));
+  const slg = F.dims[frameDim][1].map(()=>({reached: 0, bases: 0}));
   for(const p of parts){
     const D = p.dims;
     cells: for(let i = 0; i < p.len; i++){
       for(let j = 0; j < D.length; j++) if(!allow[j][D[j][i]]) continue cells;
       const f = D[frameDim][i], r = D[resultDim][i], n = p.n[i];
       counts[f][outcomeOf[r]] += n;
-      ops[f].reached += n * reachedOf[r];
-      ops[f].bases += n * basesOf[r];
+      slg[f].reached += n * reachedOf[r];
+      slg[f].bases += n * basesOf[r];
     }
   }
-  return {counts, ops};
+  return {counts, slg};
 }
 
 function draw(parts){
-  const {counts, ops} = tally(parts);
+  const {counts, slg} = tally(parts);
   const separate = document.getElementById("f-hr").value === "on";
-  const showOps = document.getElementById("f-ops").value === "on";
+  const showSlg = document.getElementById("f-slg").value === "on";
   const O = Object.fromEntries(F.outcomes.map((o, i)=>[o, i]));
   /* Columns: each is one or more outcomes summed. */
   const cols = separate
@@ -382,10 +382,10 @@ function draw(parts){
 
   const body = rows.map(({f, i})=>{
     const n = counts[i].reduce((a, b)=>a + b, 0);
-    return {f, n, ops: ops[i], cells: cols.map(col=>{ const c = colTotal(counts[i], col); return {c, pct: n ? c / n : null}; })};
+    return {f, n, slg: slg[i], cells: cols.map(col=>{ const c = colTotal(counts[i], col); return {c, pct: n ? c / n : null}; })};
   });
   const total = body.reduce((t, r)=>t + r.n, 0);
-  const totalOps = body.reduce((t, r)=>({reached: t.reached + r.ops.reached, bases: t.bases + r.ops.bases}),
+  const totalSlg = body.reduce((t, r)=>({reached: t.reached + r.slg.reached, bases: t.bases + r.slg.bases}),
                                {reached: 0, bases: 0});
   const totals = cols.map((col, j)=>{ const c = body.reduce((t, r)=>t + r.cells[j].c, 0); return {c, pct: total ? c / total : null}; });
   const max = Math.max(0, ...body.flatMap(r=>r.cells.map(x=>x.pct || 0)));
@@ -400,22 +400,24 @@ function draw(parts){
     return `<td${s ? ` class="h${s}"` : ""} data-tip="${esc(JSON.stringify(
       [pct(x.pct), `${colName(cols[j])} · ${where}`, `${x.c.toLocaleString()} of ${n.toLocaleString()} contacts`]))}">${pct(x.pct)}</td>`;
   };
-  const opsTd = (o, n, where)=>{
-    if(!showOps) return "";
-    if(!n) return `<td class="ops none">—</td>`;
-    const v = ((o.reached + o.bases) / n).toFixed(3);
-    return `<td class="ops" data-tip="${esc(JSON.stringify([v, `OPS · ${where}`,
-      `${o.reached.toLocaleString()} on base + ${o.bases.toLocaleString()} bases in ${n.toLocaleString()} contacts`]))}">${v}</td>`;
+  /* Bases per time on base: contacts that never reached base aren't in either
+     half, so a frame with no one on base has no SLG. */
+  const slgTd = (o, where)=>{
+    if(!showSlg) return "";
+    if(!o.reached) return `<td class="slg none">—</td>`;
+    const v = (o.bases / o.reached).toFixed(3);
+    return `<td class="slg" data-tip="${esc(JSON.stringify([v, `SLG · ${where}`,
+      `${o.bases.toLocaleString()} bases in ${o.reached.toLocaleString()} times on base`]))}">${v}</td>`;
   };
   const headers = separate ? cols.map(col=>OUTCOME_LABEL[col[0]]) : ["Foul", "On Base (incl. HR)", "Out"];
   table.innerHTML =
     `<thead><tr><th scope="col">Frame</th>${headers.map(h=>`<th scope="col">${h}</th>`).join("")}` +
-    (showOps ? `<th scope="col">OPS</th>` : "") +
+    (showSlg ? `<th scope="col">SLG</th>` : "") +
     `<th scope="col" class="n">Contacts</th></tr></thead><tbody>` +
     body.map(r=>`<tr><th scope="row">${r.f}</th>${r.cells.map((x, j)=>td(x, j, `frame ${r.f}`, r.n)).join("")}` +
-                `${opsTd(r.ops, r.n, `frame ${r.f}`)}<td class="n">${r.n.toLocaleString()}</td></tr>`).join("") +
+                `${slgTd(r.slg, `frame ${r.f}`)}<td class="n">${r.n.toLocaleString()}</td></tr>`).join("") +
     `<tr class="total"><th scope="row">Total</th>${totals.map((x, j)=>td(x, j, "all frames shown", total, false)).join("")}` +
-    `${opsTd(totalOps, total, "all frames shown")}<td class="n">${total.toLocaleString()}</td></tr></tbody>`;
+    `${slgTd(totalSlg, "all frames shown")}<td class="n">${total.toLocaleString()}</td></tr></tbody>`;
 
   sub.textContent = `${menus.char.label()} · ${menus.swing.label() === "All" ? "all swings" : menus.swing.label()
     .replace(/^(\d+) selected$/, "$1 swing types")} · ${total.toLocaleString()} contacts` +
@@ -423,7 +425,7 @@ function draw(parts){
   legend.innerHTML = total && max ? `<span>Share of the frame&rsquo;s contacts: 0%</span>
     <span class="sws" aria-hidden="true">${Array.from({length: STEPS}, (_, k)=>`<span class="sw h${k+1}"></span>`).join("")}</span>
     <span>${pct(max)} (the largest cell)</span>` +
-    (showOps ? `<span>&middot; OPS isn&rsquo;t shaded: times on base plus bases, per contact</span>` : "") : "";
+    (showSlg ? `<span>&middot; SLG isn&rsquo;t shaded: bases per time on base</span>` : "") : "";
 }
 
 /* One tooltip for every cell: the percentage first, then what it is. */
