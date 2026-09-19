@@ -478,8 +478,8 @@ window.MSSB_MANIFEST = {
    "end": "2026-12-15",
    "final": false,
    "players": 102,
-   "qualified": 27,
-   "built_at": "2026-09-18T12:57:03+00:00",
+   "qualified": 28,
+   "built_at": "2026-09-19T12:28:49+00:00",
    "file": "seasons/s15superstarsoff.js",
    "definitions_sha256": "55b827035a44b8a3cd15f2253d9dab426410d58ee42d4249fff2eab2f7b4b907"
   },
@@ -499,8 +499,8 @@ window.MSSB_MANIFEST = {
    "definitions_sha256": "2737124a6e83ddf91c3cd5b4f9384b972cec4884984b08429bf697da777b79f2"
   }
  ],
- "updated_at": "2026-09-18T12:57:03+00:00",
- "checked_at": "2026-09-18T12:57:06+00:00",
+ "updated_at": "2026-09-19T12:28:49+00:00",
+ "checked_at": "2026-09-19T12:28:50+00:00",
  "metric_rules": {
   "bat_barrel_pct": [
    true,
@@ -603,5 +603,5 @@ window.MSSB_MANIFEST = {
    null
   ]
  },
- "last_scheduled_run_et": "2026-09-18"
+ "last_scheduled_run_et": "2026-09-19"
 };
