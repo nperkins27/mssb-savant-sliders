@@ -3,6 +3,8 @@ DATABASE_CONNECTION.md
 
 # Private notes for future maintainers. Not for the public repo.
 HANDOFF.md
+DATABASE_SCHEMA.md
+savant_sliders_s7_validation.sql
 
 __pycache__/
 *.tmp

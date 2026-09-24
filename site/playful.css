@@ -9,7 +9,7 @@
    Same three-block pattern as shared.css: light, then dark twice. Only the
    light surfaces change (warmer); the dark set just gains the new tokens.
    Contrast checked: muted text 5.4:1 on the page, 6.2:1 on panels; white on
-   the red accent 5.6:1; "Savant" 5.3:1 light, 6.7:1 dark. */
+   the red accent 5.6:1; "Charts" 5.3:1 light, 6.7:1 dark. */
 :root{
   --r-sm:8px; --r-md:14px; --r-pill:999px;
   --bg:#e9e4db; --chrome:#f7f4ee; --line:#bdb4a6; --track:#ebe6dd; --trackline:#ddd5c8;
@@ -35,7 +35,7 @@
   --row-hover:#2d3136;
 }
 
-/* ---- title: one weight in Lilita One, so colour marks "Savant" ---- */
+/* ---- title: one weight in Lilita One, so colour marks "Charts" ---- */
 header h1 b{color:var(--accent-text)}
 
 /* ---- page tabs: pills, the current page filled red ---- */

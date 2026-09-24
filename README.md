@@ -1,4 +1,4 @@
-# MSSB Savant Sliders — site
+# RioCharts
 
 Stars Off advanced player percentiles for Mario Superstar Baseball, published as a
 static site on GitHub Pages and refreshed automatically from the Rio database.
@@ -219,15 +219,15 @@ parent folder. Open `site/index.html` directly in a browser; no server is needed
 ## Publish on GitHub Pages (one-time setup)
 
 1. **Create a public GitHub repository** and push this folder to its `main` branch.
-   Run `git init` **inside `savant-sliders-site`**, never in the parent `Project Rio`
-   folder, which holds `DATABASE_CONNECTION.md`. `.gitignore` excludes that file as
-   a backstop; still check `git status` before the first commit.
+   `DATABASE_CONNECTION.md` (and the local `DATABASE_SCHEMA.md` notes) may sit in
+   this folder; `.gitignore` excludes them, but still check `git status` before the
+   first commit.
 2. **Add the database credentials as secrets** under *Settings → Secrets and
    variables → Actions*: `RIO_DB_HOST`, `RIO_DB_PORT`, `RIO_DB_NAME`,
    `RIO_DB_USER`, `RIO_DB_PASSWORD`.
 3. **Turn on Pages** under *Settings → Pages → Build and deployment → Source:
    GitHub Actions*.
-4. **Run the workflow once** from *Actions → Refresh Savant Sliders → Run workflow*.
+4. **Run the workflow once** from *Actions → Refresh RioCharts → Run workflow*.
    The site URL appears on the deploy job.
 
 **Before step 4, check that the database accepts connections from GitHub.** If

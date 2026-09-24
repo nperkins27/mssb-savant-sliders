@@ -1,4 +1,4 @@
-name: Refresh Savant Sliders
+name: Refresh RioCharts
 
 on:
   schedule:
@@ -32,7 +32,7 @@ on:
 
 # Never run two builds at once: both would commit site/data.
 concurrency:
-  group: savant-sliders
+  group: riocharts
   cancel-in-progress: false
 
 jobs:

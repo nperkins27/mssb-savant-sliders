@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the MSSB Savant Sliders site data: one file per season plus a manifest.
+"""Build the RioCharts site data: one file per season plus a manifest.
 
 Run it any time -- it only does the work that is still due.
 
