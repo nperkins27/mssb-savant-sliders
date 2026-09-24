@@ -60,6 +60,8 @@ try{var t=localStorage.getItem("mssb-theme");if(t==="dark"||t==="light")document
   .card.dragging{box-shadow:0 16px 40px var(--shadow);opacity:.97}
   body.is-dragging, body.is-dragging *{cursor:grabbing !important}
 </style>
+<!-- Last, so it wins ties with the page styles above. -->
+<link rel="stylesheet" href="playful.css">
 </head>
 <body>
 <div class="wrap">

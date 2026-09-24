@@ -1,0 +1,92 @@
+/* Playful look, to match the Lilita One headings: rounded shapes, chunky
+   buttons, pill tabs, medals for the top 3 and a little motion.
+   Every page links it last, after shared.css and its own styles, so it wins
+   ties. The data colours (group greens and blues, heatmaps, win rates) and
+   the table cells are left alone on purpose: the fun is in the frame, not
+   the numbers. */
+
+/* ---- tokens ----
+   Same three-block pattern as shared.css: light, then dark twice. Only the
+   light surfaces change (warmer); the dark set just gains the new tokens.
+   Contrast checked: muted text 5.4:1 on the page, 6.2:1 on panels; white on
+   the red accent 5.6:1; "Savant" 5.3:1 light, 6.7:1 dark. */
+:root{
+  --r-sm:8px; --r-md:14px; --r-pill:999px;
+  --bg:#e9e4db; --chrome:#f7f4ee; --line:#bdb4a6; --track:#ebe6dd; --trackline:#ddd5c8;
+  --rowline:#e7e1d7; --boxbg:#fffdf9; --surface-hover:#f3eee5;
+  --accent:#c8261d; --accent-ink:#fff; --accent-text:#b3221a;
+  --edge:#cfc6b7;                /* chunky button bottom edge */
+  --panel-edge:#e3dcd0;
+  --panel-shadow:0 1px 2px rgba(80,60,30,.10),0 6px 18px rgba(80,60,30,.08);
+  --row-hover:#efe8dc;
+  --heat-total:#ddd6ca;          /* Total rows: the old grey, warmed to sit on cream (same contrast) */
+  --gold:#f2c14e; --silver:#cfd4db; --bronze:#dfa06e; --medal-ink:#1c1c1c;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --accent-text:#ff7b70; --edge:#0f1012; --panel-edge:var(--line);
+    --panel-shadow:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.3);
+    --row-hover:#2d3136;
+  }
+}
+:root[data-theme="dark"]{
+  --accent-text:#ff7b70; --edge:#0f1012; --panel-edge:var(--line);
+  --panel-shadow:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.3);
+  --row-hover:#2d3136;
+}
+
+/* ---- title: one weight in Lilita One, so colour marks "Savant" ---- */
+header h1 b{color:var(--accent-text)}
+
+/* ---- page tabs: pills, the current page filled red ---- */
+.tabs{border-bottom:none;gap:6px}
+.tabs a{border:1px solid transparent;border-radius:var(--r-pill);margin-bottom:0;padding:7px 16px;
+        transition:background-color .15s,border-color .15s}
+.tabs a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tabs a:not([aria-current]):hover{text-decoration:none;background:var(--chrome);border-color:var(--panel-edge)}
+@media (max-width:560px){ .tabs a{padding:7px 11px} }
+
+/* ---- panels: soft shadow and rounded corners instead of hard lines ---- */
+.panel,.controls,.tile{border-radius:var(--r-md);border-color:var(--panel-edge);box-shadow:var(--panel-shadow)}
+.mode-note,.warn,.trophy,.heat-tip{border-radius:var(--r-sm)}
+.card-placeholder{border-radius:var(--r-md)}
+code{border-radius:4px}
+
+/* ---- names and big numbers in the heading font ---- */
+.pname .box,.c-title{font-family:var(--serif);border-radius:var(--r-sm)}
+.tile .v{font-family:var(--serif)}
+
+/* ---- controls: rounded, and buttons that press like game buttons ---- */
+.controls select,.min-games,.player-field input,.card-controls select,.picker-btn,.btn{border-radius:var(--r-sm)}
+.grip{border-radius:var(--r-sm)}
+.card-remove{border-radius:var(--r-pill)}
+.controls select,.card-controls select,.picker-btn,.btn{box-shadow:0 3px 0 var(--edge);transition:transform .08s,box-shadow .08s}
+.controls select:hover,.card-controls select:hover,.picker-btn:hover,.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 var(--edge)}
+.controls select:active,.card-controls select:active,.picker-btn:active,.btn:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 var(--edge)}
+.picker-panel{border-radius:var(--r-md)}
+dialog.defs{border-radius:var(--r-md);border-color:var(--panel-edge);overflow:hidden}
+.defs-close{border-radius:var(--r-pill)}
+
+/* ---- bars: pills that grow into place ---- */
+.strack,.lb-track{border-radius:var(--r-pill);overflow:hidden}
+.strack>i,.lb-track>i{border-radius:inherit;transform-origin:left;animation:bar-grow .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes bar-grow{from{transform:scaleX(0)}}
+
+/* ---- percentile boxes: a solid rounded score tile in the heading font ---- */
+.sval{border-style:solid;border-radius:var(--r-md);font-family:var(--serif);font-size:24px}
+.sval.na{font-family:var(--sans);font-size:15px}
+
+/* ---- leaderboard: rows highlight on hover (no dividers), medals for 1-3 ---- */
+.lb-row{border-bottom:none;border-radius:var(--r-sm);padding:5px 6px}
+.lb-row:hover{background:var(--row-hover)}
+/* The negative margin keeps medal rows the same height as the rest. */
+#lb>.lb-row:nth-child(-n+3) .lb-rank{justify-self:end;display:grid;place-items:center;width:20px;height:20px;
+  margin:-2px 0;border-radius:50%;color:var(--medal-ink);font-weight:700;font-size:11px}
+#lb>.lb-row:nth-child(1) .lb-rank{background:var(--gold)}
+#lb>.lb-row:nth-child(2) .lb-rank{background:var(--silver)}
+#lb>.lb-row:nth-child(3) .lb-rank{background:var(--bronze)}
+
+@media (prefers-reduced-motion: reduce){
+  .strack>i,.lb-track>i{animation:none}
+  .tabs a,.controls select,.card-controls select,.picker-btn,.btn{transition:none}
+}

@@ -20,6 +20,7 @@ on:
       - "site/*.html"
       - "site/*.js"
       - "site/*.css"
+      - "site/fonts/**"
       - "season_metrics.py"
       - "season_metrics_sql.py"
       - "frame_results.py"
