@@ -444,11 +444,11 @@
    "kind": "season",
    "tag_set_id": 223,
    "file": "s15superstarsoff.js",
-   "games": 654,
+   "games": 656,
    "first_day": 20681,
    "last_day": 20748,
    "final": false,
-   "built_at": "2026-10-22T13:45:02+00:00",
+   "built_at": "2026-10-23T13:22:41+00:00",
    "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
