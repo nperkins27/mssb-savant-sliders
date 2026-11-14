@@ -444,11 +444,11 @@
    "kind": "season",
    "tag_set_id": 223,
    "file": "s15superstarsoff.js",
-   "games": 775,
+   "games": 783,
    "first_day": 20681,
-   "last_day": 20769,
+   "last_day": 20771,
    "final": false,
-   "built_at": "2026-11-13T16:17:31+00:00",
+   "built_at": "2026-11-14T15:00:54+00:00",
    "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   },
   {
@@ -472,11 +472,11 @@
    "series": "npss",
    "tag_set_id": 241,
    "file": "netplaysuperstars29.js",
-   "games": 6,
+   "games": 11,
    "first_day": 20768,
-   "last_day": 20769,
+   "last_day": 20770,
    "final": false,
-   "built_at": "2026-11-13T16:17:31+00:00",
+   "built_at": "2026-11-14T15:00:54+00:00",
    "definitions_sha256": "bc7f335e62f62d90c123442b44266cc303a74a4b0918cde246321960df22d5b9"
   }
  ]
